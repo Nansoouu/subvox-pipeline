@@ -1,0 +1,24 @@
+name: Bug Report
+description: Signaler un bug
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: Ce qui se passe vs ce qui devrait se passer
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      placeholder: Étapes pour reproduire
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priorité
+      options:
+        - 🔴 Bloquant (production down)
+        - 🟡 Majeur (feature cassée)
+        - 🟢 Mineur (cosmétique)

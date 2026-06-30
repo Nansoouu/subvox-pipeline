@@ -1,0 +1,237 @@
+"""
+pipeline/ffmpeg.py — Helpers FFmpeg (paths, caps, options, probes) — Subvox
+"""
+
+import subprocess
+import re
+from pathlib import Path
+
+from core.utils import format_duration_human
+from core.logging_setup import get_logger
+
+logger = get_logger(__name__)
+
+
+def _ffmpeg_path() -> str:
+    candidates = [
+        "/opt/homebrew/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+        "/usr/bin/ffmpeg",
+        "ffmpeg",
+    ]
+    for c in candidates:
+        try:
+            subprocess.run([c, "-version"], capture_output=True, check=True, timeout=5)
+            return c
+        except Exception:
+            continue
+    logger.warning(
+        "Aucun binaire ffmpeg trouve dans le PATH — le pipeline Groq echouera"
+    )
+    return "ffmpeg"
+
+
+def _has_libass() -> bool:
+    """
+    Verifie si le filtre 'ass' est reellement disponible dans ce build FFmpeg.
+    """
+    try:
+        r = subprocess.run(
+            [_ffmpeg_path(), "-filters"], capture_output=True, timeout=10
+        )
+        return bool(re.search(rb"(?:^|\s)ass\s", r.stdout, re.MULTILINE))
+    except Exception:
+        return False
+
+
+def _has_drawtext() -> bool:
+    try:
+        r = subprocess.run(
+            [_ffmpeg_path(), "-filters"], capture_output=True, timeout=10
+        )
+        return b"drawtext" in r.stdout
+    except Exception:
+        return False
+
+
+def _init_ffmpeg_caps() -> tuple[bool, bool]:
+    _l = _has_libass()
+    _d = _has_drawtext()
+    if _l:
+        logger.info("Burn mode : Mode A libass")
+    elif _d:
+        logger.info("Burn mode : Mode B drawtext")
+    else:
+        logger.info("Burn mode : Mode C Pillow (rawvideo pipe)")
+    return _l, _d
+
+
+_LIBASS_OK: bool = False
+_DRAWTEXT_OK: bool = False
+
+
+def init_ffmpeg_caps() -> tuple[bool, bool]:
+    """Initialise les capacites FFmpeg (module-level)."""
+    global _LIBASS_OK, _DRAWTEXT_OK
+    _LIBASS_OK, _DRAWTEXT_OK = _init_ffmpeg_caps()
+    return _LIBASS_OK, _DRAWTEXT_OK
+
+
+def get_libass_ok() -> bool:
+    return _LIBASS_OK
+
+
+def get_drawtext_ok() -> bool:
+    return _DRAWTEXT_OK
+
+
+def _get_ffmpeg_encoding_options() -> list[str]:
+    """
+    Options video FFmpeg optimisees pour lecture fluide sur web (HTML5 <video>).
+    """
+    return [
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "20",
+        "-g",
+        "60",
+        "-keyint_min",
+        "30",
+        "-sc_threshold",
+        "0",
+        "-bf",
+        "2",
+        "-profile:v",
+        "high",
+        "-level",
+        "4.2",
+        "-movflags",
+        "+faststart",
+        "-muxdelay",
+        "0",
+        "-pix_fmt",
+        "yuv420p",
+        "-threads",
+        "0",
+    ]
+
+
+def _get_video_dims(video: "Path") -> tuple[int, int]:
+    from pathlib import Path
+
+    ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
+    try:
+        r = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height",
+                "-of",
+                "csv=p=0",
+                str(video),
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and r.stdout:
+            parts = r.stdout.decode().strip().split(",")
+            return int(parts[0]), int(parts[1])
+    except Exception:
+        pass
+    return 1280, 720
+
+
+def _get_video_duration(video: "Path") -> float:
+    from pathlib import Path
+
+    ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
+    try:
+        r = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(video),
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return float(r.stdout.decode().strip())
+    except Exception:
+        pass
+    return 60.0
+
+
+def _get_video_frames(video: "Path") -> int:
+    """Returns the total number of frames in a video file."""
+    from pathlib import Path
+
+    ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
+    try:
+        r = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=nb_frames",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(video),
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            val = r.stdout.decode().strip()
+            if val and val != "N/A":
+                return int(val)
+    except Exception:
+        pass
+    return 0
+
+
+def _get_video_fps(video: "Path") -> float:
+    from pathlib import Path
+
+    ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
+    try:
+        r = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=r_frame_rate",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(video),
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and r.stdout:
+            frac = r.stdout.decode().strip()
+            if "/" in frac:
+                num, den = frac.split("/")
+                return float(num) / float(den)
+            return float(frac)
+    except Exception:
+        pass
+    return 25.0

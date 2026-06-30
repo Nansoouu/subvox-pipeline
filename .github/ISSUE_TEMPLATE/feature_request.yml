@@ -1,0 +1,24 @@
+name: Feature Request
+description: Proposer une amélioration
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème / Besoin
+      placeholder: Qu'est-ce que ça apporte ?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - 🌐 Pipeline
+        - 🔧 API
+        - 📖 Documentation
+        - 🧪 Tests
