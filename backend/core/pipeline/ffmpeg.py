@@ -154,8 +154,12 @@ def _get_ffmpeg_encoding_options() -> list[str]:
     base_opts = [
         "-c:v",
         encoder,
-        "-b:v",
-        "5M",
+    ]
+    if encoder == "h264_videotoolbox":
+        base_opts += ["-q:v", "50"]
+    else:
+        base_opts += ["-b:v", "5M"]
+    base_opts += [
         "-g",
         "60",
         "-keyint_min",
@@ -173,9 +177,7 @@ def _get_ffmpeg_encoding_options() -> list[str]:
     ]
 
     # Tuning par encodeur
-    if encoder == "h264_videotoolbox":
-        base_opts.extend(["-profile", "high"])
-    elif encoder == "h264_nvenc":
+    if encoder == "h264_nvenc":
         base_opts.extend(["-profile:v", "high", "-rc", "vbr"])
     elif encoder == "h264_vaapi":
         base_opts.extend(["-profile:v", "high", "-rc_mode", "VBR"])
