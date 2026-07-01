@@ -15,12 +15,13 @@ services:
       - ./backend/migrations/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
     restart: unless-stopped
 
+  # ── API Gateway ───────────────────────────────────────────────
   pipeline:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/subvox
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
       REDIS_URL: redis://redis:6379/0
       ECONOMY_URL: http://economy:8001
       CORS_ORIGINS: http://localhost:3000,http://localhost:3002
@@ -30,32 +31,84 @@ services:
     depends_on: [redis, db]
     restart: unless-stopped
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    entrypoint: celery -A core.celery_app.celery_app worker -Q short,medium,long,xlong,video_processing --pool=solo -n worker1@%h
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/subvox
-      REDIS_URL: redis://redis:6379/0
-      ECONOMY_URL: http://economy:8001
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-    depends_on: [redis, db]
-    restart: unless-stopped
-
+  # ── Economy API (auth / billing / token economy) ──────────────
   economy:
     build:
       context: ../economy
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/subvox
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: http://localhost:3000,http://localhost:3002
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     ports: ["8001:8001"]
     depends_on: [redis, db]
+    restart: unless-stopped
+
+  # ── Workers par durée ─────────────────────────────────────────
+  # Vidéos < 2 min : 4 workers simultanés
+  worker-short:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: celery -A core.celery_app.celery_app worker -Q short --concurrency=4 --prefetch-multiplier=1 -n worker-short@%h
+    environment:
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
+      REDIS_URL: redis://redis:6379/0
+      ECONOMY_URL: http://economy:8001
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CELERY_WORKER_QUEUE: short
+    depends_on: [redis, db, pipeline, economy]
+    restart: unless-stopped
+
+  # Vidéos 2-5 min : 2 workers simultanés
+  worker-medium:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: celery -A core.celery_app.celery_app worker -Q medium --concurrency=2 --prefetch-multiplier=1 -n worker-medium@%h
+    environment:
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
+      REDIS_URL: redis://redis:6379/0
+      ECONOMY_URL: http://economy:8001
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CELERY_WORKER_QUEUE: medium
+    depends_on: [redis, db, pipeline, economy]
+    restart: unless-stopped
+
+  # Vidéos 5-15 min : 1 worker
+  worker-long:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: celery -A core.celery_app.celery_app worker -Q long --concurrency=1 --prefetch-multiplier=1 -n worker-long@%h
+    environment:
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
+      REDIS_URL: redis://redis:6379/0
+      ECONOMY_URL: http://economy:8001
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CELERY_WORKER_QUEUE: long
+    depends_on: [redis, db, pipeline, economy]
+    restart: unless-stopped
+
+  # Vidéos > 15 min : 1 worker (évite de bloquer les courtes)
+  worker-xlong:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: celery -A core.celery_app.celery_app worker -Q xlong --concurrency=1 --prefetch-multiplier=1 -n worker-xlong@%h
+    environment:
+      DATABASE_URL: postgresql://postgres:***@db:5432/subvox
+      REDIS_URL: redis://redis:6379/0
+      ECONOMY_URL: http://economy:8001
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CELERY_WORKER_QUEUE: xlong
+    depends_on: [redis, db, pipeline, economy]
     restart: unless-stopped
 
 volumes:
