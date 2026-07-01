@@ -13,18 +13,21 @@
 </p>
 
 <p align="center">
-  <a href="../../README.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇬🇧-English-white" alt="English"></a>
-  <a href="README.fr.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇫🇷-Français-blue" alt="Français"></a>
-  <a href="README.pt.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇵🇹-Português-brightgreen" alt="Português"></a>
-  <a href="README.de.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇩🇪-Deutsch-orange" alt="Deutsch"></a>
-  <a href="README.it.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇮🇹-Italiano-red" alt="Italiano"></a>
-  <a href="README.ja.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇯🇵-日本語-blueviolet" alt="日本語"></a>
-  <a href="README.zh.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇨🇳-中文-critical" alt="中文"></a>
-  <a href="README.ar.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇸🇦-العربية-lightgrey" alt="العربية"></a>
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#api">API</a> •
+  <a href="#contributing">Contributing</a>
 </p>
 
 <p align="center">
-  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Versión%20en%20francés-blue" alt="Francés"></a>
+  <a href="../../README.md"><img src="https://img.shields.io/badge/🇬🇧-English-blue" alt="English"></a>
+  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Français-blue" alt="Français"></a>
+  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-日本語-blue" alt="日本語"></a>
+  <a href="README.zh.md"><img src="https://img.shields.io/badge/🇨🇳-中文-red" alt="中文"></a>
+  <a href="README.de.md"><img src="https://img.shields.io/badge/🇩🇪-Deutsch-orange" alt="Deutsch"></a>
+  <a href="README.it.md"><img src="https://img.shields.io/badge/🇮🇹-Italiano-blue" alt="Italiano"></a>
+  <a href="README.ar.md"><img src="https://img.shields.io/badge/🇸🇦-العربية-green" alt="العربية"></a>
 </p>
 
 <p align="center">  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
