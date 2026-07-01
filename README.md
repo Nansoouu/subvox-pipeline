@@ -180,6 +180,7 @@ Authentication and token management are handled by a dedicated service (private)
 | Queue | Celery + Redis |
 | Video | FFmpeg 7 |
 | Transcription | Groq (Whisper) |
+> **Note:** Groq offers 2 hours of free transcription per day. Perfect for development and small projects.
 | Translation | DeepSeek / OpenAI |
 | DB | PostgreSQL 16 |
 
