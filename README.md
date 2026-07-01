@@ -20,7 +20,18 @@
   <a href="docs/readmes/README.it.md"><img src="https://img.shields.io/badge/🇮🇹-Italiano-red" alt="Italiano"></a>
   <a href="docs/readmes/README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-%E6%97%A5%E6%9C%AC%E8%AA%9E-blueviolet" alt="日本語"></a>
   <a href="docs/readmes/README.zh.md"><img src="https://img.shields.io/badge/🇨🇳-%E4%B8%AD%E6%96%87-critical" alt="中文"></a>
-  <a href="docs/readmes/README.ar.md"><img src="https://img.shields.io/badge/🇸🇦-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-lightgrey" alt="العربية"></a>
+  <a href="docs/readmes/README.ar.md"><
+  <a href="docs/readmes/README.nl.md"><img src="https://img.shields.io/badge/🇳🇱-Nederlands-brightblue" alt="Nederlands"></a>
+  <a href="docs/readmes/README.pl.md"><img src="https://img.shields.io/badge/🇵🇱-Polski-purple" alt="Polski"></a>
+  <a href="docs/readmes/README.ru.md"><img src="https://img.shields.io/badge/🇷🇺-Русский-purple" alt="Русский"></a>
+  <a href="docs/readmes/README.uk.md"><img src="https://img.shields.io/badge/🇺🇦-Українська-yellow" alt="Українська"></a>
+  <a href="docs/readmes/README.hi.md"><img src="https://img.shields.io/badge/🇮🇳-हिन्दी-orange" alt="हिन्दी"></a>
+  <a href="docs/readmes/README.fa.md"><img src="https://img.shields.io/badge/🇮🇷-فارسی-green" alt="فارسی"></a>
+  <a href="docs/readmes/README.he.md"><img src="https://img.shields.io/badge/🇮🇱-עברית-blue" alt="עברית"></a>
+  <a href="docs/readmes/README.ko.md"><img src="https://img.shields.io/badge/🇰🇷-한국어-brightblue" alt="한국어"></a>
+  <a href="docs/readmes/README.tr.md"><img src="https://img.shields.io/badge/🇹🇷-Türkçe-red" alt="Türkçe"></a>
+  <a href="docs/readmes/README.vi.md"><img src="https://img.shields.io/badge/🇻🇳-Tiếng Việt-brightgreen" alt="Tiếng Việt"></a>
+  <a href="docs/readmes/README.id.md"><img src="https://img.shields.io/badge/🇮🇩-Bahasa Indonesia-red" alt="Bahasa Indonesia"></a>img src="https://img.shields.io/badge/🇸🇦-%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-lightgrey" alt="العربية"></a>
 </p>
 
 
