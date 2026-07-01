@@ -129,7 +129,7 @@ uvicorn backend.main:app --reload --port 8000
 | `/jobs/{id}/subtitles` | GET | Sous-titres générés |
 | `/health` | GET | Health check |
 
-Les routes `/auth/*`, `/billing/*`, `/rewards/*` sont proxifiées vers **Economy** (port 8001).
+L'authentification et la gestion des tokens sont gérées par un service dédié (privé).
 
 ---
 

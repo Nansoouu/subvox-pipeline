@@ -76,6 +76,22 @@ pip install -r requirements.txt
 pytest tests/
 ```
 
+## 🪙 Rewards
+
+Chaque contribution peut être récompensée en **SUBTEST** (tokens sur Solana devnet).
+
+| Contribution | Tokens |
+|---|---|
+| Ajouter une langue | 10 SUBTEST |
+| Écrire des tests | 10 SUBTEST |
+| Corriger un bug | 15 SUBTEST |
+| Feature mineure | 50 SUBTEST |
+| Cache transcription | 75 SUBTEST |
+| Grosse feature | 200+ SUBTEST |
+
+Les tokens sont crédités sur ton wallet Solana après merge de ta PR.
+Ils te permettent de lancer des traductions sur la plateforme.
+
 ## 💬 Communication
 
 - **Issues** : signalez un bug, proposez une idée
