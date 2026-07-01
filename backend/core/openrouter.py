@@ -565,6 +565,7 @@ async def generate_adaptive_summary(
             video_title=video_title,
             video_description=video_description,
             max_chars=30000,
+            user_id=user_id,
         )
         if data is None:
             return {"global_summary": "", "segments": [], "tier": 1}
@@ -583,6 +584,7 @@ async def generate_adaptive_summary(
             video_title=video_title,
             video_description=video_description,
             max_chars=60000,
+            user_id=user_id,
         )
         if data is None:
             return {"global_summary": "", "segments": [], "tier": 2}
@@ -600,6 +602,7 @@ async def generate_adaptive_summary(
         target_lang=target_lang,
         video_title=video_title,
         video_description=video_description,
+        user_id=user_id,
     )
     if data is None:
         return {"global_summary": "", "segments": [], "tier": 3}
@@ -651,6 +654,7 @@ async def _generate_long_video_summary(
     target_lang: str = "",
     video_title: str = "",
     video_description: str = "",
+    user_id: str = "",
 ) -> dict | None:
     """
     Tier 3 : split le transcript en chunks parallélisés, puis orchestre la fusion.
@@ -701,6 +705,7 @@ async def _generate_long_video_summary(
             video_title=chunk_title,
             video_description=video_description,
             max_chars=chunk_chars + 2000,  # un peu de marge
+            user_id=user_id,
         )
 
         duration = _time.monotonic() - t0
