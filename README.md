@@ -61,6 +61,38 @@
 
 ---
 
+## 🎬 La pipeline vue par l'utilisateur
+
+```
+1. Tu colles un lien vidéo
+   │  YouTube, X/Twitter, TikTok, Instagram, Facebook...
+   │  Le validateur vérifie en 2 secondes si c'est accessible
+   ▼
+2. Téléchargement
+   │  yt-dlp récupère la vidéo (jusqu'à 4K)
+   ▼
+3. Transcription audio
+   │  Groq Whisper transforme l'audio en texte
+   │  Supporte 20+ langues
+   ▼
+4. Traduction
+   │  DeepSeek / OpenAI traduit les sous-titres
+   │  Dans la langue de ton choix
+   ▼
+5. Incrustation
+   │  ffmpeg + libass gravent les sous-titres dans la vidéo
+   │  Watermark automatique, style personnalisable
+   ▼
+6. Résultat
+   │  Vidéo sous-titrée, prête à partager
+   │  Export SRT/VTT possible
+```
+
+**Temps total :** 2-5 minutes pour une vidéo de 3 minutes.
+**Pas besoin de coder.** Tu colles un lien, tu choisis une langue, tu obtiens une vidéo traduite.
+
+---
+
 ## 🏗 Architecture
 
 ```

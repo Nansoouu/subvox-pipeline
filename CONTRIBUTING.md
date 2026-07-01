@@ -101,4 +101,30 @@ Tu peux les utiliser pour lancer des traductions, les échanger, ou les conserve
 
 ---
 
-Fait avec ❤️ par Nansou — le projet est jeune, toute aide est précieuse.
+---
+
+## 🙏 Remerciements
+
+Ce projet n'existerait pas sans les projets open-source qui rendent tout possible :
+
+| Projet | Ce qu'il apporte |
+|---|---|
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Téléchargement vidéo depuis 1872 sites |
+| [Groq](https://groq.com) | Transcription audio Whisper ultra-rapide |
+| [DeepSeek](https://deepseek.com) | Traduction LLM de qualité |
+| [OpenAI](https://openai.com) | API de transcription et traduction |
+| [FFmpeg](https://ffmpeg.org) | Incrustation des sous-titres et traitement vidéo |
+| [FastAPI](https://fastapi.tiangolo.com) | Framework API Python |
+| [Celery](https://docs.celeryq.dev) | File d'attente asynchrone |
+| [Redis](https://redis.io) | Broker de messages |
+| [PostgreSQL](https://postgresql.org) | Base de données |
+
+---
+
+> Contribuer plutôt que copier fait avancer le monde plus rapidement.
+> La communauté open-source est la preuve qu'on va plus loin ensemble.
+>
+> Chaque PR, chaque issue, chaque retour compte.
+> Tu n'es pas un utilisateur. Tu es un membre de la communauté.
+
+Fait avec ❤️ par [Nansou](https://github.com/Nansoouu) — le projet est jeune, toute aide est précieuse.
