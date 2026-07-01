@@ -11,11 +11,13 @@ from . import _models
 from . import public
 from . import status
 from . import subtitles
+from . import check_url
 
 router = APIRouter()
 router.include_router(public.router)
 router.include_router(status.router)
 router.include_router(subtitles.router)
+router.include_router(check_url.router)
 
 # Classes Pydantic
 JobStatusResponse = _models.JobStatusResponse
