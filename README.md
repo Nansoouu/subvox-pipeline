@@ -42,9 +42,9 @@
 <p align="center">  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/python-3.14-blue" alt="Python">
   <img src="https://img.shields.io/badge/FFmpeg-required-orange" alt="FFmpeg">
-  <img src="https://img.shields.io/github/stars/Nansouoouu/subvox-pipeline?style=flat&color=yellow" alt="Stars">
-  <img src="https://img.shields.io/github/issues/Nansouoouu/subvox-pipeline?style=flat&color=red" alt="Issues">
-  <img src="https://img.shields.io/github/actions/workflow/status/Nansouoouu/subvox-pipeline/ci.yml?branch=main&label=CI" alt="CI">
+  <img src="https://img.shields.io/github/stars/Nansoouu/subvox-pipeline?style=flat&color=yellow" alt="Stars">
+  <img src="https://img.shields.io/github/issues/Nansoouu/subvox-pipeline?style=flat&color=red" alt="Issues">
+  <img src="https://img.shields.io/github/actions/workflow/status/Nansoouu/subvox-pipeline/ci.yml?branch=main&label=CI" alt="CI">
   <img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker" alt="Docker">
 </p>
 
@@ -144,7 +144,7 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/Nansouoouu/subvox-pipeline.git
+git clone https://github.com/Nansoouu/subvox-pipeline.git
 cd subvox-pipeline
 
 # 2. Launch the full stack
@@ -249,4 +249,17 @@ Subvox Pipeline relies on essential open-source projects:
 
 ## 📄 License
 
-MIT,  made with ❤️ by [Nansou](https://github.com/Nansouoouu)
+MIT,  made with ❤️ by [Nansou](https://github.com/Nansoouu)
+
+---
+
+## ✅ Test Status
+
+| Suite | Tests | Status |
+|-------|-------|--------|
+| **Unit tests** (pytest) | 90 | ✅ Passing |
+| **E2E Personas** (5 users) | 5 phases | ✅ Preflight / Source-languages / By-source / Submit |
+| **E2E Economy** (circuit complet) | 49/50 | ✅ New split 60/10/20/5/5 validated |
+| **Provider normalization** | 8 checks | ✅ Groq+DeepSeek 30%+30%, Full 25%+25%+5%+5% |
+
+Run locally: `python3 tests/tests_e2e_economy.py`
