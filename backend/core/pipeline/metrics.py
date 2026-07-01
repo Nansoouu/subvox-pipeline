@@ -83,8 +83,14 @@ class CostMetrics:
     """Métriques de coût API (Groq + LLM)."""
 
     groq_eur: float = 0.0
+    groq_time_s: int = 0
     llm_summary_eur: float = 0.0
+    llm_meta_analysis_eur: float = 0.0
+    llm_text_analysis_eur: float = 0.0
+    llm_visual_analysis_eur: float = 0.0
+    llm_fusion_eur: float = 0.0
     llm_translation_eur: float = 0.0
+    llm_seo_eur: float = 0.0
     total_eur: float = 0.0
 
 
@@ -104,6 +110,8 @@ class JobMetrics:
     total_duration_s: float = 0.0
     pipeline_started_at: float = 0.0
     pipeline_ended_at: float = 0.0
+    # Suivi détaillé des tokens par appel LLM
+    llm_calls: list[dict] = field(default_factory=list)
 
 
 # ─── Collecteur ──────────────────────────────────────────────────────────────
@@ -279,21 +287,87 @@ class MetricsCollector:
 
     # ── Métriques coût ───────────────────────────────────────────────────
 
+    _LLM_COST_FIELDS = {
+        "summary": "llm_summary_eur",
+        "meta_analysis": "llm_meta_analysis_eur",
+        "text_analysis": "llm_text_analysis_eur",
+        "visual_analysis": "llm_visual_analysis_eur",
+        "fusion": "llm_fusion_eur",
+        "translating": "llm_translation_eur",
+        "seo": "llm_seo_eur",
+    }
+
+    def record_llm_call(
+        self,
+        step_name: str,
+        model: str,
+        tokens_in: int,
+        tokens_out: int,
+        cost_eur: float,
+    ) -> None:
+        """Enregistre un appel LLM individuel (tokens + coût) et cumule dans CostMetrics."""
+
+        if not self._job_metrics.cost:
+            self._job_metrics.cost = CostMetrics()
+        cost = self._job_metrics.cost
+
+        # Ajouter aux LLM calls individuels
+        self._job_metrics.llm_calls.append({
+            "step": step_name,
+            "model": model,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+            "cost_eur": round(cost_eur, 6),
+            "ts": time.time(),
+        })
+
+        # Cumuler dans CostMetrics
+        field = self._LLM_COST_FIELDS.get(step_name)
+        if field:
+            current = getattr(cost, field, 0.0)
+            setattr(cost, field, round(current + cost_eur, 6))
+
+        cost.total_eur = round(sum(
+            getattr(cost, f, 0.0)
+            for f in [
+                "groq_eur",
+                "llm_summary_eur", "llm_meta_analysis_eur",
+                "llm_text_analysis_eur", "llm_visual_analysis_eur",
+                "llm_fusion_eur", "llm_translation_eur", "llm_seo_eur",
+            ]
+        ), 6)
+        self._job_metrics.cost = cost
+
     def set_cost_metrics(
         self,
         groq_eur: float = 0.0,
+        groq_time_s: int = 0,
         llm_summary_eur: float = 0.0,
+        llm_meta_analysis_eur: float = 0.0,
+        llm_text_analysis_eur: float = 0.0,
+        llm_visual_analysis_eur: float = 0.0,
+        llm_fusion_eur: float = 0.0,
         llm_translation_eur: float = 0.0,
+        llm_seo_eur: float = 0.0,
     ) -> None:
         """Ajoute des coûts aux métriques (cumulatif)."""
         cost = self._job_metrics.cost or CostMetrics()
         cost.groq_eur = round(cost.groq_eur + groq_eur, 6)
+        cost.groq_time_s = cost.groq_time_s + groq_time_s
         cost.llm_summary_eur = round(cost.llm_summary_eur + llm_summary_eur, 6)
-        cost.llm_translation_eur = round(
-            cost.llm_translation_eur + llm_translation_eur, 6
-        )
+        cost.llm_meta_analysis_eur = round(cost.llm_meta_analysis_eur + llm_meta_analysis_eur, 6)
+        cost.llm_text_analysis_eur = round(cost.llm_text_analysis_eur + llm_text_analysis_eur, 6)
+        cost.llm_visual_analysis_eur = round(cost.llm_visual_analysis_eur + llm_visual_analysis_eur, 6)
+        cost.llm_fusion_eur = round(cost.llm_fusion_eur + llm_fusion_eur, 6)
+        cost.llm_translation_eur = round(cost.llm_translation_eur + llm_translation_eur, 6)
+        cost.llm_seo_eur = round(cost.llm_seo_eur + llm_seo_eur, 6)
         cost.total_eur = round(
-            cost.groq_eur + cost.llm_summary_eur + cost.llm_translation_eur, 6
+            cost.groq_eur
+            + cost.llm_summary_eur + cost.llm_meta_analysis_eur
+            + cost.llm_text_analysis_eur + cost.llm_visual_analysis_eur
+            + cost.llm_fusion_eur + cost.llm_translation_eur
+            + cost.llm_seo_eur,
+            6,
         )
         self._job_metrics.cost = cost
 
