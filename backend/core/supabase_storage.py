@@ -6,7 +6,6 @@ Quand Supabase sera configuré (VPS), upload_video utilisera le bucket Supabase.
 """
 
 import logging
-import os
 import shutil
 from datetime import datetime
 from pathlib import Path

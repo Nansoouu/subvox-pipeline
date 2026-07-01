@@ -13,12 +13,7 @@ ne sont pas installées — dans ce cas, un floutage basique par frame est tent�
 
 from __future__ import annotations
 
-import json
-import os
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import Any
 
 from core.config import settings
 from core.logging_setup import get_logger
@@ -220,7 +215,7 @@ class AnonymizationStep(AnalysisStep):
         fps = cap.get(cv2.CAP_PROP_FPS)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         # Output vidéo anonymisée
         tmp_dir = Path(settings.LOCAL_TEMP_DIR) / f"anonymize_{job_id}"

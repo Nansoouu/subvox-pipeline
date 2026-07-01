@@ -111,6 +111,7 @@ class Settings:
     OLLAMA_URL: str = _get("ollama_url", "http://localhost:11434")
     OLLAMA_MODEL: str = _get("ollama_model", "qwen2.5:3b")
     OLLAMA_TIMEOUT: float = _get_float("ollama_timeout", 300.0)
+    LLM_ENABLED: bool = _get_bool("llm_enabled", False)
 
     # ── CORS ─────────────────────────────────────────────────────────
     CORS_ORIGINS: str = _get("cors_origins", "http://localhost:3000,http://localhost:3001,http://localhost:3002")

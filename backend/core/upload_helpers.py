@@ -2,10 +2,7 @@
 core/upload_helpers.py — Helpers d'upload fichier pour jobs — Subvox
 """
 
-import os
-import uuid
 from pathlib import Path
-from typing import Optional
 from fastapi import UploadFile
 
 from core.config import settings

@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
 
 from core.logging_setup import get_logger
 from core.openrouter import call_openrouter, PRIMARY_MODEL
@@ -113,7 +112,7 @@ def _extract_timestamps(transcript: str) -> list[dict]:
         start_str = match.group(1)
         end_str = match.group(2)
         # Convertir en secondes
-        h, m, s, ms = 0, 0, 0, 0
+        _h, _m, _s, _ms = 0, 0, 0, 0
         parts = start_str.replace(",", ".").split(":")
         start_s = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
         parts = end_str.replace(",", ".").split(":")

@@ -50,7 +50,8 @@ async def check_quota(user, request=None, duration_s=0) -> QuotaCheck:
 async def record_usage(user, job_id: str, duration_s: float):
     """Forward to confidential quota if available."""
     try:
-        import sys as _sys, os as _os
+        import sys as _sys
+        import os as _os
         _conf = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "..", "subvox-confidential", "backend")
         if _conf not in _sys.path:
             _sys.path.insert(0, _conf)

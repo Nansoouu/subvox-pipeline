@@ -191,7 +191,8 @@ def process_video_task(
                         )
                         if row and row["cost_breakdown"]:
                             cb = row["cost_breakdown"]
-                            if isinstance(cb, str): cb = _json.loads(cb)
+                            if isinstance(cb, str):
+                                cb = _json.loads(cb)
                             return (cb or {}).get("wallet", "")
                 import asyncio as _aio
                 wallet = _aio.run(_get_wallet())
@@ -344,8 +345,8 @@ def burn_job_background(
         # ── 1. Vérifier le job ───────────────────────────────────────────
         import uuid as _uuid
         from core.pipeline.persist import (
-            save_burn_status, get_burn_status, mark_step_completed,
-            save_pipeline_file, save_step_data,
+            save_burn_status, mark_step_completed,
+            save_pipeline_file,
         )
         from core.db import direct_connect
         
@@ -380,10 +381,10 @@ def burn_job_background(
                 return {"status": "ready", "storage_url": storage_url}
             
             # ── 2. Lire les données nécessaires ──────────────────────────
-            source_lang = row["source_lang"] or ""
-            target_lang = row["target_lang"] or ""
-            video_width = row["video_width"] or 1920
-            video_height = row["video_height"] or 1080
+            row["source_lang"] or ""
+            row["target_lang"] or ""
+            row["video_width"] or 1920
+            row["video_height"] or 1080
             
             # Récupérer les ASS et chemins depuis processed_files
             from core.pipeline.persist import load_step_data, get_source_mp4_path
@@ -559,7 +560,6 @@ def burn_job_background(
             
             # Callback de progression pour le burn
             def _on_burn_progress(pct: int):
-                import asyncio as _asyncio
                 # On ne peut pas await depuis un callback synchrone
                 # On utilise une approche simple : maj périodique
                 pass

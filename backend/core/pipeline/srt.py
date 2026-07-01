@@ -4,10 +4,8 @@ pipeline/srt.py — Helpers SRT/ASS (parsing, timing, conversion) — Subvox
 
 import textwrap
 import re
-from pathlib import Path
 
 from core.logging_setup import get_logger
-from core.pipeline.ffmpeg import _get_video_dims
 
 logger = get_logger(__name__)
 
@@ -249,8 +247,8 @@ def _srt_to_ass(
             )
             logger.debug(
                 "ASS inline tags: "
-                f"c=white, 3c=black(alpha=FF), 4c=black(alpha=FF), "
-                f"bord=4, shad=0"
+                "c=white, 3c=black(alpha=FF), 4c=black(alpha=FF), "
+                "bord=4, shad=0"
             )
 
             event_lines.append(

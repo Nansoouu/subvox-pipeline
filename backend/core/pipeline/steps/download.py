@@ -5,9 +5,6 @@
 from __future__ import annotations
 
 import html
-import uuid
-from pathlib import Path
-from typing import Any
 
 from core.config import settings
 from core.logging_setup import get_logger
@@ -34,9 +31,7 @@ async def step_download(
     Extrait métadonnées (durée, langue, thumbnail, width, height).
     Upload source vers Supabase si configuré.
     """
-    from core.db import get_conn as _get_conn
     from core.supabase_storage import upload_video as _upload_video
-    from uuid import UUID
 
     log_extra = {"job_id": job_id}
     tmp = _get_tmp(job_id)
@@ -167,7 +162,7 @@ async def step_download(
         )
         if upload_res:
             storage_key = upload_res.get("storage_url", storage_key)
-            logger.info(f"Download mode termine", extra=log_extra)
+            logger.info("Download mode termine", extra=log_extra)
         return StepResult(
             data={
                 "storage_url": storage_key,

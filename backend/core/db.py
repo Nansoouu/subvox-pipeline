@@ -4,7 +4,6 @@ core/db.py — Pool de connexions PostgreSQL async (asyncpg) — Subvox
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
@@ -39,7 +38,7 @@ async def init_pool() -> None:
         command_timeout=30,
         statement_cache_size=0,
     )
-    logger.info(f"Pool asyncpg initialisé")
+    logger.info("Pool asyncpg initialisé")
 
 
 async def close_pool() -> None:

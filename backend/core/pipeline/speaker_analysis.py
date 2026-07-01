@@ -16,12 +16,8 @@ Pipeline :
 
 from __future__ import annotations
 
-import json
-import os
 import subprocess
-import tempfile
 from pathlib import Path
-from typing import Any
 
 from core.config import settings
 from core.logging_setup import get_logger
@@ -255,7 +251,7 @@ class SpeakerAnalysisStep(AnalysisStep):
         # Pour l'instant, estimation basique via rapport temps de parole
         # (une version plus sophistiquée utiliserait pydub ou librosa)
         for spk_id, spk_data in speakers_map.items():
-            total = spk_data["total_time_s"]
+            spk_data["total_time_s"]
             # Heuristique simple : si c'est le locuteur principal et
             # temps de parole > 60%, marquer comme "dominant"
             speakers_list = list(speakers_map.values())
@@ -314,7 +310,7 @@ class SpeakerAnalysisStep(AnalysisStep):
         silence_starts = [
             float(m) for m in re.findall(r"silence_start: ([\d.]+)", stderr_out)
         ]
-        silence_ends = [
+        [
             float(m) for m in re.findall(r"silence_end: ([\d.]+)", stderr_out)
         ]
 

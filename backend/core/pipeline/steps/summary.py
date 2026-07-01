@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from core.logging_setup import get_logger
+from core.config import settings
 from core.pipeline.duration_tiers import DurationTier
 from core.pipeline.steps._types import StepResult
 

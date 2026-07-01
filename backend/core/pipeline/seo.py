@@ -20,9 +20,8 @@ import unicodedata
 import uuid
 from datetime import datetime, timezone
 
-from core.config import settings
 from core.logging_setup import get_logger
-from core.openrouter import call_openrouter, PRIMARY_MODEL, _estimate_cost
+from core.openrouter import call_openrouter, PRIMARY_MODEL
 
 logger = get_logger(__name__)
 

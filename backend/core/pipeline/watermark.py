@@ -39,7 +39,6 @@ def _generate_watermark_png(
         return None
 
     import os
-    import math as _math
     from core.config import settings
 
     if not text:
@@ -102,7 +101,6 @@ def _get_logo_path() -> Path | None:
     Retourne le chemin absolu du logo watermark.
     Cherche d'abord dans backend/assets/, puis a la racine du projet.
     """
-    import os
     from pathlib import Path as _Path
 
     from core.config import settings

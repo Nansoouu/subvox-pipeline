@@ -130,7 +130,7 @@ async def _update_job(job_id: str, **kwargs) -> bool:
     for i, (key, val) in enumerate(kwargs.items(), 1):
         set_clauses.append(f"{key}=${i}")
         values.append(val)
-    set_clauses.append(f"updated_at=now()")
+    set_clauses.append("updated_at=now()")
     values.append(uuid.UUID(job_id))
 
     try:
@@ -721,7 +721,7 @@ async def get_burn_status(job_id: str) -> dict:
     
     ps = _parse_jsonb(row.get("processed_steps"), "get_burn_status")
     storage_url = row.get("storage_url") or ""
-    source_storage_url = row.get("source_storage_url") or ""
+    row.get("source_storage_url") or ""
     
     # Lire depuis processed_steps (ne pas utiliser storage_url != source_storage_url
     # car c'est vrai pour toute vidéo traduite, même sans burn)

@@ -3,7 +3,6 @@ core/tts_client.py — Client HTTP async pour Voicebox (sidecar TTS)
 """
 
 import logging
-from typing import Optional
 
 import httpx
 

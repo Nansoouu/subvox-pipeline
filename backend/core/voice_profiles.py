@@ -3,7 +3,6 @@ core/voice_profiles.py — CRUD des profils vocaux utilisateur
 """
 
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from core.db import get_pool

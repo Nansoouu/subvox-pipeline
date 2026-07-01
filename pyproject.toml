@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+ignore = ["E402", "E741"]
+
+[tool.ruff.per-file-ignores]
+"backend/core/pipeline/anonymization.py" = ["F401"]
+"backend/core/pipeline/speaker_analysis.py" = ["F401"]
+"backend/core/pipeline/steps/download.py" = ["F401"]
+"backend/core/pipeline/watermark.py" = ["F401"]

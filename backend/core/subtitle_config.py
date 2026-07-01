@@ -9,7 +9,6 @@ import importlib
 import logging
 import os as _os
 import sys as _sys
-from pathlib import Path as _Path
 
 logger = logging.getLogger(__name__)
 

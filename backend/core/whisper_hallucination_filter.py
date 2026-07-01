@@ -6,7 +6,6 @@ Filtre les répétitions, bruits parasites, et patterns de "thank you".
 from __future__ import annotations
 
 import re
-import unicodedata
 from typing import Optional
 
 from core.logging_setup import get_logger

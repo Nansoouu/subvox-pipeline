@@ -5,7 +5,6 @@ core/timeline_utils.py — Utilitaires timeline (SRT, reorder, segments) — Sub
 from __future__ import annotations
 
 import uuid
-from pathlib import Path
 from typing import Optional
 
 from core.logging_setup import get_logger

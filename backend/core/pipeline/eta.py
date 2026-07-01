@@ -8,8 +8,6 @@ les prédictions des étapes restantes.
 
 from __future__ import annotations
 
-import time
-from datetime import datetime, timezone
 from typing import Any
 
 from core.logging_setup import get_logger

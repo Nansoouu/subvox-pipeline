@@ -20,17 +20,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-import os
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import Any
 
-from core.config import settings
 from core.logging_setup import get_logger
 from core.openrouter import call_openrouter
 from core.pipeline.analysis_base import AnalysisStep
-from core.pipeline.ffmpeg import _ffmpeg_path, _get_video_duration, _get_video_dims
+from core.pipeline.ffmpeg import _ffmpeg_path, _get_video_duration
 
 logger = get_logger(__name__)
 
@@ -282,7 +277,6 @@ class VisualAnalysisStep(AnalysisStep):
     ) -> dict:
         """Envoie les frames au modèle vision avec fallback si le modèle principal échoue."""
         # Préparer le message avec les frames encodées en base64
-        images_section_lines: list[str] = []
         vision_messages: list[dict] = []
 
         # Message système

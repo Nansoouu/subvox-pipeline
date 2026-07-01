@@ -4,7 +4,7 @@ Vérifie les JWT générés par Economy (port 8001).
 Ne gère PAS le login Phantom — c'est le rôle de Economy.
 """
 
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException
 from core.jwt_utils import decode_token
 
 

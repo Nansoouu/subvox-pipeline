@@ -12,19 +12,16 @@ Optimisations 2026-05-08 :
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-from typing import Optional
 
 import asyncio
-import uuid
 from datetime import datetime, timezone
 import httpx
 from core.config import settings
 from core.logging_setup import get_logger
 from core.pipeline.metrics import get_collector
 from core.pipeline.telemetry import TelemetryWriter
-from core.pipeline.eta import ETAEngine, compute_video_category
+from core.pipeline.eta import compute_video_category
 from core.pipeline.persist import (
     get_completed_steps,
     mark_step_completed,
@@ -33,13 +30,12 @@ from core.pipeline.persist import (
     load_step_data,
     get_summary_for_lang,
     save_filtered_srt,
-    load_filtered_srt,
     set_error_context,
     increment_resume_attempts,
     STEPS_ORDERED,
     get_vtt_url,
 )
-from core.pipeline.seo import generate_seo_metadata, save_seo_metadata, generate_seo_all_langs, save_seo_metadata_multilingual
+from core.pipeline.seo import generate_seo_all_langs, save_seo_metadata_multilingual
 from core.pipeline.duration_tiers import get_tier, DurationTier
 from core.pipeline.steps import (
     StepResult,
@@ -126,7 +122,6 @@ async def _run_analysis_parallel(
 
     Retourne un dict {step_name: data} pour chaque étape complétée.
     """
-    from core.pipeline.steps import _get_tmp as _gt
     log_extra = {"job_id": job_id[:8]}
     results: dict[str, dict] = {}
 
@@ -517,7 +512,7 @@ async def run_pipeline(
 
             # Lancer meta_analysis, text_analysis, visual_analysis EN PARALLÈLE
             _step_start["analysis_parallel"] = _time.time()
-            analysis_results = await _run_analysis_parallel(
+            await _run_analysis_parallel(
                 job_id, tmp, completed, dl_data, tx_data,
                 srt_timestamps=srt_timestamps,
             )
@@ -804,7 +799,7 @@ async def run_pipeline(
         else:
             # ── Mode legacy : 2 burns parallèles (source + cible) ──────────
             source_ass_path = tmp / "source_subtitles.ass"
-            target_ass_path = tmp / "subtitles.ass"
+            tmp / "subtitles.ass"
             has_source_ass = source_ass_path.exists()
 
             async def _burn_target():

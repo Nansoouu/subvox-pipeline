@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-from uuid import UUID
 
 from core.config import settings
 from core.logging_setup import get_logger

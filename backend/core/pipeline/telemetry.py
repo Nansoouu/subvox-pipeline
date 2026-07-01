@@ -10,10 +10,9 @@ Utilisé par runner.py et les steps individuelles (step_translate notamment).
 from __future__ import annotations
 
 import json
-import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from core.logging_setup import get_logger
 

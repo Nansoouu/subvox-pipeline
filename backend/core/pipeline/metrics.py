@@ -21,7 +21,6 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Optional
 
-from core.config import settings
 from core.logging_setup import get_logger
 from core.pipeline.ffmpeg import (
     _get_video_dims,

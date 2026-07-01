@@ -14,7 +14,6 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 import httpx
 from core.db import direct_connect as _direct
@@ -23,14 +22,9 @@ from core.pipeline.metrics import MetricsCollector
 from core.pipeline.persist import (
     mark_step_completed,
     save_step_data,
-    save_pipeline_file,
-    load_step_data,
     load_filtered_srt,
-    save_filtered_srt,
-    get_vtt_url,
     save_vtt_urls,
 )
-from core.pipeline.duration_tiers import get_tier
 
 logger = get_logger(__name__)
 
@@ -363,7 +357,7 @@ async def _ensure_source_mp4(
                     )
                     if row:
                         source_storage_url = row.get("source_storage_url")
-                        source_url = row.get("source_url", "")
+                        row.get("source_url", "")
             except Exception:
                 pass
 

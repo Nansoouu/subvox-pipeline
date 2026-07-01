@@ -10,7 +10,6 @@ Fallback: if Ollama is unreachable, falls back to OpenRouter/DeepSeek.
 
 from __future__ import annotations
 
-import json
 import httpx
 from typing import Any
 

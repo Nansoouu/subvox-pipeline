@@ -7,7 +7,6 @@ Contient également les helpers _burn_ass et _burn_ass_with_progress
 from __future__ import annotations
 
 import os
-import random as _random
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -26,7 +25,7 @@ from core.pipeline.watermark import (
     _compute_sporadic_timecodes,
     _build_sporadic_drawtext_filters,
 )
-from core.pipeline.steps._helpers import _get_tmp, _parse_ffmpeg_progress_line
+from core.pipeline.steps._helpers import _get_tmp
 from core.pipeline.steps._types import StepResult
 from core.config import settings
 
@@ -52,7 +51,7 @@ def _burn_ass_with_progress(
     """
     ffmpeg = _ffmpeg_path()
     vid_w, vid_h = _get_video_dims(video)
-    total_frames = _get_video_frames(video)
+    _get_video_frames(video)
     wm_exists = wm_path and wm_path.exists()
 
     if wm_exists and settings.WATERMARK_SPORADIC_ENABLED:

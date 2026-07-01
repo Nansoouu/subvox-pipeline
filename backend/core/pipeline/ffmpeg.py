@@ -6,7 +6,6 @@ import subprocess
 import re
 from pathlib import Path
 
-from core.utils import format_duration_human
 from core.logging_setup import get_logger
 
 logger = get_logger(__name__)
@@ -120,7 +119,6 @@ def _get_ffmpeg_encoding_options() -> list[str]:
 
 
 def _get_video_dims(video: "Path") -> tuple[int, int]:
-    from pathlib import Path
 
     ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
     try:
@@ -149,7 +147,6 @@ def _get_video_dims(video: "Path") -> tuple[int, int]:
 
 
 def _get_video_duration(video: "Path") -> float:
-    from pathlib import Path
 
     ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
     try:
@@ -176,7 +173,6 @@ def _get_video_duration(video: "Path") -> float:
 
 def _get_video_frames(video: "Path") -> int:
     """Returns the total number of frames in a video file."""
-    from pathlib import Path
 
     ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
     try:
@@ -206,7 +202,6 @@ def _get_video_frames(video: "Path") -> int:
 
 
 def _get_video_fps(video: "Path") -> float:
-    from pathlib import Path
 
     ffprobe = _ffmpeg_path().replace("ffmpeg", "ffprobe")
     try:

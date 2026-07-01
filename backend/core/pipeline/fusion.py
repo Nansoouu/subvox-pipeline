@@ -19,9 +19,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from typing import Any
 
-from core.config import settings
 from core.logging_setup import get_logger
 from core.openrouter import call_openrouter, PRIMARY_MODEL
 from core.pipeline.analysis_base import AnalysisStep

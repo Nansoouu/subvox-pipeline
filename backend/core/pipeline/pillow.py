@@ -15,7 +15,6 @@ from core.pipeline.ffmpeg import (
     _get_video_dims,
     _get_video_fps,
     _get_video_duration,
-    _get_ffmpeg_encoding_options,
 )
 from core.pipeline.srt import _parse_srt
 
@@ -122,7 +121,7 @@ def _burn_subtitles_pillow(
         except TypeError:
             return ImageFont.load_default()
 
-    font = _load_font(fontsize)
+    _load_font(fontsize)
     pad_h = 10
     pad_v = 8
     max_w = int(vid_w * 0.80)
