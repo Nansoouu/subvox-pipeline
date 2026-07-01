@@ -33,15 +33,17 @@
 
 ## ✨ Story
 
-> J'ai 35 ans. Pendant 10 ans, j'ai dirigé une entreprise. Puis j'ai découvert la tech.
+> I'm 35. For 10 years I ran a business. Then I discovered tech.
 >
-> Ce n'était pas un pivot de carrière. C'était une révélation. La possibilité de construire, depuis mon terminal, des outils qui traversent les frontières.
+> It wasn't a career pivot. It was a revelation. The ability to build, from my terminal, tools that cross borders.
 >
-> Subvox est né de cette obsession : et si on pouvait prendre n'importe quelle vidéo, un discours politique coréen, un tutoriel en allemand, une conférence en arabe, et la rendre accessible dans ta langue maternelle, en quelques minutes, sans perdre la voix, le ton, l'intention ?
+> Subvox was born from this obsession: what if you could take any video — a Korean political speech, a German tutorial, an Arabic conference — and make it accessible in your native language, in minutes, without losing the voice, the tone, the intent?
 >
-> C'est un projet solo, bâti commit par commit, parce que je crois que la technologie devrait appartenir à tout le monde. Pas juste à ceux qui parlent anglais.
+> Subvox is also about contributing as a community to make video translation accessible to everyone. Unlike **Veed.io**, **Kapwing**, **Descript**, or **Opus Clip** — giants that charge a fortune for what should be free, that limit your exports, that lock you into subscriptions — Subvox is open, transparent, and built by the people who use it.
 >
-> Ce pipeline est le cœur technique. Le reste, wallets, tokens, économie, vit ailleurs. Ici, c'est la machine à traduire le monde. Libre. Gratuite. Ouverte.
+> This is a solo project, built commit by commit, because I believe technology should belong to everyone. Not just those who speak English.
+>
+> This pipeline is the technical heart. The rest — wallets, tokens, economy — lives elsewhere. Here, it's the machine to translate the world. Free. Open. Yours.
 >
 > *Nansou*
 
