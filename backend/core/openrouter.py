@@ -6,7 +6,9 @@ OSINT / géocodage / citations supprimés.
 
 import json
 import re
+import os
 import httpx
+from pathlib import Path
 from typing import Any
 
 from core.config import settings
@@ -27,6 +29,32 @@ FALLBACK_MODEL = "gpt-4o-mini"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 OPENROUTER_TIMEOUT = 90.0
+_OPENROUTER_KEY: str | None = None
+
+
+def _get_openrouter_key() -> str | None:
+    """Récupère la clé OpenRouter : env var > settings > None."""
+    global _OPENROUTER_KEY
+    if _OPENROUTER_KEY:
+        return _OPENROUTER_KEY
+    key = os.environ.get("OPENROUTER_API_KEY") or ""
+    if not key:
+        key = getattr(settings, "OPENROUTER_API_KEY", "") or ""
+    if not key:
+        # Dernier recours : tenter de lire depuis le fichier Hermes auth
+        try:
+            auth_path = Path.home() / ".hermes" / "auth.json"
+            if auth_path.exists():
+                import json
+                data = json.loads(auth_path.read_text())
+                pool = data.get("credential_pool", {}).get("openrouter", [])
+                if pool:
+                    key = pool[0].get("access_token", "")
+        except Exception:
+            pass
+    if key:
+        _OPENROUTER_KEY = key
+    return _OPENROUTER_KEY or None
 
 # ── Tarifs ($/M tokens) ────────────────────────
 PRICING: dict[str, dict[str, float]] = {
@@ -127,25 +155,55 @@ async def call_openrouter(
     step_name: str = "",
 ) -> tuple[str | None, int, int]:
     """
-    Appel générique à l'API DeepSeek.
+    Appel générique à DeepSeek ou OpenRouter selon le modèle.
+
+    Routage automatique :
+      - deepseek-*  → DeepSeek API (texte)
+      - google/*    → OpenRouter (vision)
+      - groq/*      → Groq API (vision/audio)
+      - openai/*    → OpenRouter
+      - autre       → DeepSeek par défaut
     Retourne (contenu | None, tokens_in, tokens_out).
     """
     import time as _time
 
-    # ── Clé API ──────────────────────────────────────────────
-    deepseek_key = getattr(settings, "DEEPSEEK_API_KEY", None)
-    if not deepseek_key:
-        logger.warning("Aucune clé DEEPSEEK_API_KEY configurée")
-        return None, 0, 0
+    # ── Déterminer la route selon le modèle ──
+    model_lower = model.lower()
 
-    api_url = DEEPSEEK_URL
+    # Modèles vision → OpenRouter
+    vision_prefixes = ("google/", "anthropic/", "openai/", "meta-llama/")
+    is_vision_model = model_lower.startswith(vision_prefixes)
+
+    # Modèles texte DeepSeek
+    is_deepseek_model = model_lower.startswith("deepseek") or model_lower == PRIMARY_MODEL
+
+    if is_vision_model:
+        api_url = OPENROUTER_URL
+        api_key = _get_openrouter_key()
+        if not api_key:
+            logger.warning("Aucune clé OpenRouter configurée pour le modèle vision %s", model)
+            return None, 0, 0
+    elif is_deepseek_model:
+        api_url = DEEPSEEK_URL
+        api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        if not api_key:
+            logger.warning("Aucune clé DEEPSEEK_API_KEY configurée")
+            return None, 0, 0
+        # Nettoyer le préfixe openrouter si présent
+        if model.startswith("deepseek/"):
+            model = model.replace("deepseek/", "")
+    else:
+        # Fallback : DeepSeek
+        api_url = DEEPSEEK_URL
+        api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        if not api_key:
+            logger.warning("Aucune clé API configurée pour le modèle %s", model)
+            return None, 0, 0
+
     headers = {
-        "Authorization": f"Bearer {deepseek_key}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    # Nettoyer le préfixe openrouter si présent
-    if model.startswith("deepseek/"):
-        model = model.replace("deepseek/", "")
 
     # Cache hit
     if cache_key:

@@ -20,6 +20,10 @@ SEGMENTED_SUMMARY_PROMPT = (
     "lire sur un site de recommandation. Adapte naturellement le ton au contenu de la "
     "vidéo (pédagogue pour un tutoriel, enthousiaste pour du divertissement, rigoureux "
     "pour des news, etc.).\n\n"
+    "IMPORTANT — Sous-titres bruités :\n"
+    "Si les sous-titres semblent être des hallucinations (phrases sans rapport, "
+    "répétitions de bruit, texte incohérent), base-toi sur le TITRE et la DESCRIPTION "
+    "plutôt que sur le transcript. Décris ce que le titre et la description suggèrent.\n\n"
     "4. **SEGMENTS CLÉS** — Identifie entre 4 et 8 moments importants de la vidéo, bien "
     "répartis dans le temps. Pour chaque segment, rédige les champs ci-dessous dans un "
     "STYLE NARRATIF FLUIDE — pas de listes, pas de tirets, pas de \"--\", pas de "
@@ -101,7 +105,8 @@ ORCHESTRATOR_PROMPT = (
 )
 
 SUMMARY_SYSTEM_PROMPT = (
-    "Tu es un excellent assistant qui décrit des vidéos à partir de leurs sous-titres.\n"
+    "Tu es un excellent assistant qui décrit des vidéos à partir de leurs sous-titres "
+    "et métadonnées.\n"
     "Tu dois produire une description claire, fluide et naturelle en {target_lang}.\n\n"
     "Tu vas recevoir :\n"
     "- Le titre de la vidéo\n"
@@ -111,6 +116,13 @@ SUMMARY_SYSTEM_PROMPT = (
     "1. **De quoi elle parle** (le sujet principal)\n"
     "2. **Ce qu'on y apprend** (les points clés abordés)\n"
     "3. **Le ton** (informatif, humoristique, technique, témoignage, etc.)\n\n"
-    "Maximum 5 phrases, style conversationnel et naturel. Ne fais pas de liste à puces,\n"
+    "ATTENTION - Sous-titres bruités :\n"
+    "Si les sous-titres semblent être du bruit, des hallucinations (phrases sans rapport, "
+    "répétitions de 'thank you', 'music', '♪', texte illisible), NE te base PAS "
+    "uniquement dessus. Utilise le TITRE et la DESCRIPTION comme source principale. "
+    "Décris ce que le titre suggère plutôt que les sous-titres aberrants.\n"
+    "Exemple : si le titre est 'Big Buck Bunny' et les sous-titres sont "
+    "'thank you for watching I don't know music', décris le dessin animé.\n\n"
+    "Maximum 5 phrases, style conversationnel et naturel. Ne fais pas de liste à puces, "
     "écris un paragraphe fluide."
 )
