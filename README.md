@@ -20,6 +20,10 @@
   <a href="#contributing">Contributing</a>
 </p>
 
+<p align="center">
+  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Version%20française-blue" alt="Français"></a>
+</p>
+
 <p align="center">  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/python-3.14-blue" alt="Python">
   <img src="https://img.shields.io/badge/FFmpeg-required-orange" alt="FFmpeg">
@@ -51,47 +55,47 @@
 
 ## 🎯 Features
 
-| Step | What it does |
+| Step | Description |
 |---|---|
-| **⬇️ Download** | Récupère la vidéo depuis X/Twitter, YouTube, ou URL directe |
-| **🎙️ Transcribe** | Transcription audio via Groq (Whisper), 20+ langues |
-| **🌐 Translate** | Traduction LLM (DeepSeek / OpenAI) vers la langue cible |
-| **🎬 Burn** | Incrustation des sous-titres dans la vidéo (ffmpeg/libass) |
-| **☁️ Upload** | Stockage local ou S3 du résultat final |
+| **⬇️ Download** | Fetches video from X/Twitter, YouTube, or direct URL |
+| **🎙️ Transcribe** | Audio transcription via Groq (Whisper), 20+ languages |
+| **🌐 Translate** | LLM translation (DeepSeek / OpenAI) to target language |
+| **🎬 Burn** | Subtitle overlay into video (ffmpeg/libass) |
+| **☁️ Upload** | Local or S3 storage of the final result |
 
-**Bonus :** VTT/SRT export, watermark automatique, détection de scènes, analyse de contenu.
+**Bonus:** VTT/SRT export, auto watermark, scene detection, content analysis.
 
 ---
 
 ## 🎬 La pipeline vue par l'utilisateur
 
 ```
-1. Tu colles un lien vidéo
+1. Paste a video link
    │  YouTube, X/Twitter, TikTok, Instagram, Facebook...
-   │  Le validateur vérifie en 2 secondes si c'est accessible
+   │  Validator checks accessibility in 2 seconds
    ▼
-2. Téléchargement
-   │  yt-dlp récupère la vidéo (jusqu'à 4K)
+2. Download
+   │  yt-dlp fetches the video (up to 4K)
    ▼
-3. Transcription audio
-   │  Groq Whisper transforme l'audio en texte
-   │  Supporte 20+ langues
+3. Audio transcription
+   │  Groq Whisper converts audio to text
+   │  Supports 20+ languages
    ▼
-4. Traduction
-   │  DeepSeek / OpenAI traduit les sous-titres
-   │  Dans la langue de ton choix
+4. Translation
+   │  DeepSeek / OpenAI translates subtitles
+   │  In the language of your choice
    ▼
-5. Incrustation
-   │  ffmpeg + libass gravent les sous-titres dans la vidéo
-   │  Watermark automatique, style personnalisable
+5. Burn
+   │  ffmpeg + libass burn subtitles into the video
+   │  Auto watermark, customizable style
    ▼
-6. Résultat
-   │  Vidéo sous-titrée, prête à partager
-   │  Export SRT/VTT possible
+6. Result
+   │  Subtitled video, ready to share
+   │  SRT/VTT export available
 ```
 
-**Temps total :** 2-5 minutes pour une vidéo de 3 minutes.
-**Pas besoin de coder.** Tu colles un lien, tu choisis une langue, tu obtiens une vidéo traduite.
+**Total time:** 2-5 minutes for a 3-minute video.
+**No coding required.** Paste a link, pick a language, get a translated video.
 
 ---
 
@@ -115,7 +119,7 @@
                     └─────────────┘
 ```
 
-**Pipeline** = pure technique (ce repo). Appelle **Economy** via HTTP pour l'auth.
+**Pipeline** = pure tech (this repo). Calls **Economy** via HTTP for auth.
 
 ---
 
@@ -163,7 +167,7 @@ uvicorn backend.main:app --reload --port 8000
 | `/jobs/{id}/subtitles` | GET | Sous-titres générés |
 | `/health` | GET | Health check |
 
-L'authentification et la gestion des tokens sont gérées par un service dédié (privé).
+Authentication and token management are handled by a dedicated service (private).
 
 ---
 
