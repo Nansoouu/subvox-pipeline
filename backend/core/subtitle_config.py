@@ -74,6 +74,14 @@ if not _has_real:
         def get(self, key: str, default=None):
             return self.defaults.get(key, default)
 
+        def get_watermark_safe_zone(self) -> tuple[float, float]:
+            """Return top-fraction and bottom-fraction of the watermark safe zone."""
+            return (0.0, 0.2)
+
+        def get_watermark_max_dims(self) -> tuple[int, int]:
+            """Return max (width, height) in pixels for watermark."""
+            return (300, 100)
+
         def __getattr__(self, name):
             if name == "defaults":
                 return self.defaults
