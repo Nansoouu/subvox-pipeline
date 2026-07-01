@@ -156,9 +156,9 @@ def _get_ffmpeg_encoding_options() -> list[str]:
         encoder,
     ]
     if encoder == "h264_videotoolbox":
-        base_opts += ["-q:v", "50"]
+        base_opts += ["-b:v", "2M"]
     else:
-        base_opts += ["-b:v", "5M"]
+        base_opts += ["-b:v", "3M"]
     base_opts += [
         "-g",
         "60",
