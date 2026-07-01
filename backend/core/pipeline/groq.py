@@ -24,9 +24,17 @@ _ECONOMY_TIMEOUT = 5        # timeout pour les appels de vérification
 # ─── Vérification de quota ───────────────────────────────────────────────────
 
 
-def _check_key_quota(api_key: str, economy_url: str | None = None) -> dict:
+def _check_key_quota(
+    api_key: str,
+    economy_url: str | None = None,
+    expected_duration_s: float = 10.0,
+) -> dict:
     """
-    Interroge le service economy pour savoir si cette clé a du temps restant.
+    Interroge le service economy pour savoir si cette clé a assez de temps
+    pour couvrir `expected_duration_s` secondes de transcription.
+
+    expected_duration_s : durée prévue du chunk (défaut 10s).
+    Un chunk de 600s nécessite >= 600s restants.
 
     Retourne un dict avec :
       { "has_quota": bool, "remaining_s": int, "daily_limit_s": int, "daily_usage_s": int }
@@ -50,13 +58,14 @@ def _check_key_quota(api_key: str, economy_url: str | None = None) -> dict:
             remaining = data.get("remaining_s", 7200)
             daily_limit = data.get("daily_limit_s", 7200)
             daily_usage = data.get("daily_usage_s", 0)
-            has_quota = remaining > 10  # au moins 10s de marge
+            # Vérification stricte : assez de temps pour le chunk entier
+            has_quota = remaining >= expected_duration_s
             logger.debug(
                 "Groq quota check",
                 extra={
                     "key": key_short,
                     "remaining_s": remaining,
-                    "limit_s": daily_limit,
+                    "expected_s": expected_duration_s,
                     "has_quota": has_quota,
                 },
             )
@@ -139,24 +148,36 @@ def _transcribe_via_groq(
     api_keys = list(dict.fromkeys(raw_keys))
 
     # ── 2. Pré-vérification des quotas ────────────────────────────────────────
+    # On utilise _GROQ_CHUNK_DURATION comme référence : chaque chunk fait 600s
+    chunk_duration_s = _GROQ_CHUNK_DURATION
     key_quota_cache: dict[str, dict] = {}
     for k in api_keys:
-        quota = _check_key_quota(k, economy_url)
+        quota = _check_key_quota(k, economy_url, expected_duration_s=chunk_duration_s)
         key_quota_cache[k] = quota
         if not quota["has_quota"]:
+            remaining = quota["remaining_s"]
             logger.warning(
-                f"Clé {k[:8]}... quota épuisé "
-                f"({quota['daily_usage_s']}/{quota['daily_limit_s']}s)"
+                f"Clé {k[:8]}... quota insuffisant pour un chunk de "
+                f"{chunk_duration_s}s (reste {remaining}s)"
             )
 
     # Si toutes les clés sont hors quota, message clair
     if all(not key_quota_cache[k]["has_quota"] for k in api_keys):
         used = key_quota_cache[api_keys[0]]["daily_usage_s"]
         limit = key_quota_cache[api_keys[0]]["daily_limit_s"]
-        msg = (
-            f"Temps Groq épuisé ({used}/{limit}s). "
-            "Ajoute ta propre clé Groq dans Mon compte pour débloquer 1h30 par jour."
-        )
+        remaining = key_quota_cache[api_keys[0]]["remaining_s"]
+        if remaining > 0:
+            msg = (
+                f"Temps Groq insuffisant pour transcrire un bloc de "
+                f"{chunk_duration_s // 60}min. "
+                f"Il te reste {remaining // 60}min ({used}/{limit}s). "
+                "Ajoute ta propre clé Groq dans Mon compte pour débloquer 1h30 par jour."
+            )
+        else:
+            msg = (
+                f"Temps Groq épuisé ({used}/{limit}s). "
+                "Ajoute ta propre clé Groq dans Mon compte pour débloquer 1h30 par jour."
+            )
         logger.warning(msg)
         return {"error": "quota_exhausted", "message": msg}
 
@@ -214,10 +235,10 @@ def _transcribe_via_groq(
             key = api_keys[idx]
             key_tag = f"clé {idx + 1}/{n}"
 
-            # Vérification rapide du quota (cache)
+            # Vérification rapide du quota (cache) — assez pour ce chunk ?
             quota = key_quota_cache.get(key)
             if quota and not quota["has_quota"]:
-                logger.debug(f"{key_tag} sautée (quota épuisé)")
+                logger.debug(f"{key_tag} sautée (quota insuffisant pour le chunk)")
                 failed_keys.add(idx)
                 continue
 
