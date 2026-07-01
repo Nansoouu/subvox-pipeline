@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 
 import asyncpg
 import httpx
+from pathlib import Path
 
 API = "http://localhost:8001"
 DB = "postgresql://postgres:***@localhost:5432/subvox"
@@ -132,7 +133,8 @@ async def main():
             check("rewards_share > 0", cb.get("rewards_share", 0) > 0, f"{cb['rewards_share']}")
             check("burn_amount >= 0", cb.get("burn_amount", -1) >= 0, f"{cb['burn_amount']}")
             total = (cb.get("provider_share", 0) + cb.get("platform_share", 0)
-                     + cb.get("rewards_share", 0) + cb.get("burn_amount", 0))
+                     + cb.get("rewards_share", 0) + cb.get("burn_amount", 0)
+                     + cb.get("opfees_share", 0))
             check("shares sum = user_cost", cb.get("user_cost", 0) == total,
                   f"{cb['user_cost']} = {total}")
 
@@ -220,6 +222,36 @@ async def main():
         data = r.json()
         check("by-source HTTP 200", r.status_code == 200)
         check("jobs > 0 pour cette URL", len(data) > 0, f"{len(data)} jobs")
+
+        # ── 10. PROVIDER SPLIT NORMALISATION (test direct) ──
+        print("\n10. PROVIDER SPLIT NORMALISATION")
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "economy" / "backend"))
+        from core.subvox_economy import get_provider_split, PROVIDER_WEIGHTS
+        import_path = sys.path.pop(0)
+
+        # Normal: Groq + DeepSeek only
+        s1 = get_provider_split({"groq_transcription", "deepseek_translation"})
+        total1 = sum(s1.values())
+        check("normal split sum = 0.60", abs(total1 - 0.60) < 0.001, f"{total1:.4f}")
+        check("groq ~30%", 0.29 < s1.get("groq_transcription", 0) < 0.31,
+              f"{s1.get('groq_transcription', 0)*100:.1f}%")
+        check("deepseek ~30%", 0.29 < s1.get("deepseek_translation", 0) < 0.31,
+              f"{s1.get('deepseek_translation', 0)*100:.1f}%")
+        check("no vision", "openrouter_vision" not in s1)
+
+        # Complet: Groq + DeepSeek + Vision + Cookies
+        s2 = get_provider_split(set(PROVIDER_WEIGHTS.keys()))
+        total2 = sum(s2.values())
+        check("full split sum = 0.60", abs(total2 - 0.60) < 0.001, f"{total2:.4f}")
+        check("groq ~25%", 0.24 < s2.get("groq_transcription", 0) < 0.26,
+              f"{s2.get('groq_transcription', 0)*100:.1f}%")
+        check("deepseek ~25%", 0.24 < s2.get("deepseek_translation", 0) < 0.26,
+              f"{s2.get('deepseek_translation', 0)*100:.1f}%")
+        check("vision ~5%", 0.04 < s2.get("openrouter_vision", 0) < 0.06,
+              f"{s2.get('openrouter_vision', 0)*100:.1f}%")
+        check("cookies ~5%", 0.04 < s2.get("cookies_access", 0) < 0.06,
+              f"{s2.get('cookies_access', 0)*100:.1f}%")
 
         await db.close()
 
