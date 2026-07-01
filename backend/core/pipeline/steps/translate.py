@@ -125,10 +125,12 @@ async def step_translate(
                                     f"Chunk {index}: Ollama failed, falling back to OpenRouter"
                                 )
                                 from core.openrouter import translate_srt as _ts
-                                translated = await _ts(chunk, source_lang, target_lang)
+                                translated = await _ts(chunk, source_lang, target_lang,
+                                                        user_id=f"job_{job_id}")
                         else:
                             translated = await translate_srt(
-                                chunk, source_lang, target_lang
+                                chunk, source_lang, target_lang,
+                                user_id=f"job_{job_id}",
                             )
                         if translated and (
                             " --> " in translated or "\n00:" in translated
@@ -190,7 +192,8 @@ async def step_translate(
                 _chunk_fail = 0
                 _chunks_total = 0
                 translated_srt_content = await translate_srt(
-                    clean_srt, source_lang, target_lang
+                    clean_srt, source_lang, target_lang,
+                    user_id=f"job_{job_id}",
                 )
                 if translated_srt_content:
                     logger.info(

@@ -80,6 +80,7 @@ async def step_summary(
                 target_lang=target_lang,
                 video_title=video_title,
                 video_description=video_description,
+                user_id=f"job_{job_id}",
             )
             if adaptive_result:
                 summary = adaptive_result.get("global_summary", "")

@@ -163,6 +163,9 @@ async def call_openrouter(
       - groq/*      → Groq API (vision/audio)
       - openai/*    → OpenRouter
       - autre       → DeepSeek par défaut
+
+    Le coût est automatiquement enregistré dans job_metrics si user_id
+    contient un job_id (format "job_{uuid}" ou "{uuid}").
     Retourne (contenu | None, tokens_in, tokens_out).
     """
     import time as _time
@@ -260,6 +263,23 @@ async def call_openrouter(
             },
         )
 
+        # Auto-record cost from user_id (format: "job_{uuid}" or "{uuid}")
+        _job_id = ""
+        if user_id and user_id != "anonymous":
+            _job_id = user_id.replace("job_", "", 1) if user_id.startswith("job_") else user_id
+        if _job_id and tokens_in > 0:
+            try:
+                from core.pipeline.metrics import get_collector
+                get_collector(_job_id).record_llm_call(
+                    step_name=step_name or "unknown",
+                    model=model,
+                    tokens_in=tokens_in,
+                    tokens_out=tokens_out,
+                    cost_eur=cost,
+                )
+            except Exception:
+                pass  # Non bloquant
+
         # Cache miss → store
         if cache_key:
             await _to_cache(cache_key, content)
@@ -287,6 +307,7 @@ async def generate_summary(
     target_lang: str = "",
     video_title: str = "",
     video_description: str = "",
+    user_id: str = "",
 ) -> str:
     """
     Génère une description de la vidéo via DeepSeek V3 à partir :
@@ -333,6 +354,8 @@ async def generate_summary(
         temperature=0.3,
         max_tokens=1024,
         cache_key=f"summary_{target}_{truncated[:100]}",
+        step_name="summary",
+        user_id=user_id or "anonymous",
     )
     return (content or "").strip()
 
@@ -344,6 +367,7 @@ async def generate_segmented_summary(
     video_title: str = "",
     video_description: str = "",
     max_chars: int = 30000,
+    user_id: str = "",
 ) -> dict | None:
     """
     Génère un sommaire structuré (résumé global + segments thématiques)
@@ -389,6 +413,8 @@ async def generate_segmented_summary(
         temperature=0.3,
         max_tokens=4096,
         cache_key=f"segmented_summary_{target}_{max_chars}_{truncated[:100]}",
+        step_name="summary",
+        user_id=user_id or "anonymous",
     )
 
     if not content:
@@ -505,6 +531,7 @@ async def generate_adaptive_summary(
     target_lang: str = "",
     video_title: str = "",
     video_description: str = "",
+    user_id: str = "",
 ) -> dict:
     """
     Génère un résumé adaptatif selon la longueur du transcript :
@@ -882,6 +909,7 @@ async def translate_srt(
     srt_content: str,
     source_lang: str,
     target_lang: str,
+    user_id: str = "",
 ) -> str | None:
     """
     Traduit un contenu SRT via DeepSeek V3.
@@ -941,6 +969,8 @@ async def translate_srt(
         temperature=0.3,
         max_tokens=8192,
         cache_key=cache_key,
+        step_name="translating",
+        user_id=user_id or "anonymous",
     )
     if not content:
         logger.error(
