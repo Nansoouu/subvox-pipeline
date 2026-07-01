@@ -7,6 +7,7 @@ Améliorations v2 :
   - Rotation intelligente des clés (évite celles en rate-limit)
   - Messages d'erreur structurés avec temps restant connu
   - Rapport de consommation au service economy
+  - Retour des segments structurés avec confiance (avg_logprob, no_speech_prob)
 """
 
 import subprocess
@@ -113,6 +114,50 @@ def _compute_timeout(audio_duration_s: float) -> float:
     return max(120.0, min(600.0, raw))
 
 
+# ─── Helpers de parsing ──────────────────────────────────────────────────────
+
+
+def _whisper_segment_to_dict(seg: dict, offset_s: float = 0.0) -> dict:
+    """
+    Transforme un segment Whisper (verbose_json) en dict structuré propre.
+
+    Inclut les métriques de confiance : avg_logprob, no_speech_prob, compression_ratio.
+    """
+    start = float(seg.get("start", 0)) + offset_s
+    end = float(seg.get("end", start + 2)) + offset_s
+    text = seg.get("text", "").strip()
+    return {
+        "start_s": round(start, 3),
+        "end_s": round(end, 3),
+        "text": text,
+        "confidence": round(float(seg.get("avg_logprob", 0) or 0), 4),
+        "no_speech_prob": round(float(seg.get("no_speech_prob", 0) or 0), 4),
+        "compression_ratio": round(float(seg.get("compression_ratio", 1) or 1), 4),
+        "tokens": seg.get("tokens", []),
+        "temperature": float(seg.get("temperature", 0)),
+    }
+
+
+def _build_segments_list(
+    raw_segments: list[dict],
+    language: str,
+    offset_s: float = 0.0,
+) -> list[dict]:
+    """
+    Construit une liste de segments structurés propre à partir des segments Whisper bruts.
+    Filtre les segments vides, ajoute l'index et la langue.
+    """
+    result = []
+    for i, seg in enumerate(raw_segments, 1):
+        d = _whisper_segment_to_dict(seg, offset_s)
+        if not d["text"]:
+            continue
+        d["index"] = i
+        d["language"] = language
+        result.append(d)
+    return result
+
+
 # ─── Appel Groq avec suivi de quota ──────────────────────────────────────────
 
 
@@ -125,11 +170,20 @@ def _transcribe_via_groq(
 ) -> dict | None:
     """
     Transcription via Groq API.
-    Gestion avancée : rotation de clés, quota check, chunking, checkpoint, retry.
 
-    Retourne None si échec définitif, sinon un dict avec text/language.
-    En cas de quota épuisé, retourne un dict avec error="quota_exhausted"
-    et un message explicite.
+    Retourne un dict structuré :
+      {
+        "text": str,           # Texte brut complet
+        "language": str,       # Langue détectée
+        "segments": [          # Segments structurés avec confiance
+          {"index": int, "start_s": float, "end_s": float, "text": str,
+           "confidence": float, "no_speech_prob": float, ...}
+        ],
+        "model": str,          # Modèle utilisé
+      }
+
+    Retourne None si échec définitif.
+    En cas de quota épuisé, retourne {"error": "quota_exhausted", "message": "..."}.
     """
     import httpx as _httpx
     import json as _json
@@ -144,11 +198,9 @@ def _transcribe_via_groq(
         logger.error("Aucune clé API Groq configurée")
         return None
 
-    # Dédoublonner en gardant l'ordre
     api_keys = list(dict.fromkeys(raw_keys))
 
     # ── 2. Pré-vérification des quotas ────────────────────────────────────────
-    # On utilise _GROQ_CHUNK_DURATION comme référence : chaque chunk fait 600s
     chunk_duration_s = _GROQ_CHUNK_DURATION
     key_quota_cache: dict[str, dict] = {}
     for k in api_keys:
@@ -161,7 +213,6 @@ def _transcribe_via_groq(
                 f"{chunk_duration_s}s (reste {remaining}s)"
             )
 
-    # Si toutes les clés sont hors quota, message clair
     if all(not key_quota_cache[k]["has_quota"] for k in api_keys):
         used = key_quota_cache[api_keys[0]]["daily_usage_s"]
         limit = key_quota_cache[api_keys[0]]["daily_limit_s"]
@@ -218,16 +269,12 @@ def _transcribe_via_groq(
         audio_duration_s: float,
         chunk_idx: int = 0,
     ):
-        """
-        Rotation intelligente : essaie chaque clé en round-robin,
-        mais saute celles qui étaient en quota épuisé ou en erreur.
-        """
         timeout_s = _compute_timeout(audio_duration_s)
         n = len(api_keys)
         failed_keys: set[int] = set()
         rate_limited_keys: set[int] = set()
 
-        for attempt in range(n * 3):  # 3 passes max
+        for attempt in range(n * 3):
             idx = (chunk_idx + attempt) % n
             if idx in failed_keys:
                 continue
@@ -235,7 +282,6 @@ def _transcribe_via_groq(
             key = api_keys[idx]
             key_tag = f"clé {idx + 1}/{n}"
 
-            # Vérification rapide du quota (cache) — assez pour ce chunk ?
             quota = key_quota_cache.get(key)
             if quota and not quota["has_quota"]:
                 logger.debug(f"{key_tag} sautée (quota insuffisant pour le chunk)")
@@ -262,7 +308,6 @@ def _transcribe_via_groq(
 
             failed_keys.add(idx)
 
-        # Toutes les clés épuisées
         logger.error(f"Groq : toutes les clés épuisées pour {filename}")
         return None, 0
 
@@ -326,8 +371,7 @@ def _transcribe_via_groq(
             with open(audio_path, "rb") as f:
                 audio_bytes = f.read()
 
-            # Durée estimée via rapport taille/taux (16kbps mono 16kHz)
-            estimated_duration_s = audio_path.stat().st_size / (16000 * 2)  # ≈ 16KB/s
+            estimated_duration_s = audio_path.stat().st_size / (16000 * 2)
 
             data, used_key_idx = _call_groq_with_retry(
                 audio_bytes, audio_path.name, estimated_duration_s, chunk_idx=0
@@ -337,45 +381,47 @@ def _transcribe_via_groq(
             if isinstance(data, dict) and data.get("error") == "quota_exhausted":
                 return data
 
-            segments = data.get("segments", [])
+            raw_segments = data.get("segments", [])
             full_text = data.get("text", "").strip()
             language = data.get("language", "en")
 
-            if not segments and not full_text:
+            if not raw_segments and not full_text:
                 return None
 
-            # Rapporter la consommation
-            total_duration_s = segments[-1]["end"] if segments else estimated_duration_s
+            # Structurer les segments
+            segments = _build_segments_list(raw_segments, language)
+            total_duration_s = max((s["end_s"] for s in segments), default=estimated_duration_s)
             _report_groq_usage(api_keys[used_key_idx], int(total_duration_s), economy_url)
 
+            # Générer SRT + TXT (rétrocompatibilité)
             if not segments:
                 srt_out.write_text(
                     f"1\n00:00:00,000 --> 00:00:05,000\n{full_text}\n",
                     encoding="utf-8",
                 )
                 txt_out.write_text(full_text, encoding="utf-8")
-                return {"text": full_text, "language": language}
+            else:
+                srt_lines, text_parts = [], []
+                for seg in segments:
+                    text_parts.append(seg["text"])
+                    srt_lines.append(
+                        f"{seg['index']}\n{_to_srt_time(seg['start_s'])} "
+                        f"--> {_to_srt_time(seg['end_s'])}\n{seg['text']}\n"
+                    )
+                full_text = " ".join(text_parts)
+                srt_out.write_text("\n".join(srt_lines), encoding="utf-8")
+                txt_out.write_text(full_text, encoding="utf-8")
 
-            srt_lines, text_parts = [], []
-            for i, seg in enumerate(segments, 1):
-                start = float(seg.get("start", 0))
-                end = float(seg.get("end", start + 2))
-                text = seg.get("text", "").strip()
-                if not text:
-                    continue
-                text_parts.append(text)
-                srt_lines.append(
-                    f"{i}\n{_to_srt_time(start)} --> {_to_srt_time(end)}\n{text}\n"
-                )
-
-            full_text = " ".join(text_parts)
-            srt_out.write_text("\n".join(srt_lines), encoding="utf-8")
-            txt_out.write_text(full_text, encoding="utf-8")
             logger.info(
-                f"Groq transcription OK: {len(srt_lines)} segments",
+                f"Groq transcription OK: {len(segments)} segments",
                 extra={"language": language},
             )
-            return {"text": full_text, "language": language}
+            return {
+                "text": full_text,
+                "language": language,
+                "segments": segments,
+                "model": data.get("model", "whisper-large-v3-turbo"),
+            }
 
         # ── 6. Audio > 24 MB → chunking + checkpoint ─────────────────────────
         ffprobe = ffmpeg.replace("ffmpeg", "ffprobe")
@@ -408,10 +454,11 @@ def _transcribe_via_groq(
             },
         )
 
-        all_segs: list[tuple[float, float, str]] = []
+        all_segments: list[dict] = []
         language = "en"
         last_key_idx = 0
         total_consumed_s = 0
+        seg_counter = 0
 
         for ci in range(n_chunks):
             offset_s = ci * _GROQ_CHUNK_DURATION
@@ -421,11 +468,11 @@ def _transcribe_via_groq(
             if chunk_json_path.exists():
                 try:
                     saved = _json.loads(chunk_json_path.read_text(encoding="utf-8"))
-                    loaded = [(d["s"], d["e"], d["t"]) for d in saved if d.get("t")]
-                    if loaded:
-                        all_segs.extend(loaded)
+                    if saved:
+                        all_segments.extend(saved)
+                        seg_counter = max((s["index"] for s in saved), default=0)
                         logger.info(
-                            f"Groq checkpoint chunk {ci + 1}/{n_chunks}: {len(loaded)} segs"
+                            f"Groq checkpoint chunk {ci + 1}/{n_chunks}: {len(saved)} segs"
                         )
                         continue
                 except Exception:
@@ -455,15 +502,12 @@ def _transcribe_via_groq(
                 timeout=300,
             )
             if rc.returncode != 0 or not chunk_mp3.exists():
-                logger.warning(
-                    f"Groq chunk {ci + 1}/{n_chunks} découpage échoué, skip"
-                )
+                logger.warning(f"Groq chunk {ci + 1}/{n_chunks} découpage échoué, skip")
                 continue
 
             chunk_mb = chunk_mp3.stat().st_size / 1024 / 1024
             logger.info(
-                f"Groq chunk {ci + 1}/{n_chunks} "
-                f"({chunk_mb:.1f} MB, offset={offset_s:.0f}s)"
+                f"Groq chunk {ci + 1}/{n_chunks} ({chunk_mb:.1f} MB, offset={offset_s:.0f}s)"
             )
 
             with open(chunk_mp3, "rb") as f:
@@ -477,53 +521,46 @@ def _transcribe_via_groq(
                 chunk_idx=last_key_idx,
             )
             if not data:
-                logger.warning(
-                    f"Groq chunk {ci + 1} transcription échouée, skip"
-                )
+                logger.warning(f"Groq chunk {ci + 1} transcription échouée, skip")
                 continue
             if isinstance(data, dict) and data.get("error") == "quota_exhausted":
-                # Quota épuisé en cours de route
                 logger.warning(
                     f"Groq chunk {ci + 1}: quota épuisé, "
-                    f"on garde {len(all_segs)} segments déjà obtenus"
+                    f"garde {len(all_segments)} segments déjà obtenus"
                 )
                 break
 
             language = data.get("language", language)
-            chunk_segs: list[tuple[float, float, str]] = []
-            for seg in data.get("segments") or []:
-                s = float(seg.get("start", 0)) + offset_s
-                e = float(seg.get("end", s + 2)) + offset_s
-                t = seg.get("text", "").strip()
-                if t:
-                    chunk_segs.append((s, e, t))
+            raw_segs = data.get("segments") or []
+            chunk_segs = _build_segments_list(raw_segs, language, offset_s)
+            # Réindexer globalement
+            for s in chunk_segs:
+                seg_counter += 1
+                s["index"] = seg_counter
 
-            all_segs.extend(chunk_segs)
+            all_segments.extend(chunk_segs)
             total_consumed_s += int(_GROQ_CHUNK_DURATION)
 
             if chunk_segs:
                 chunk_json_path.write_text(
-                    _json.dumps(
-                        [{"s": s, "e": e, "t": t} for s, e, t in chunk_segs],
-                        ensure_ascii=False,
-                    ),
+                    _json.dumps(chunk_segs, ensure_ascii=False),
                     encoding="utf-8",
                 )
-            logger.info(
-                f"Groq chunk {ci + 1}/{n_chunks} : {len(chunk_segs)} segments"
-            )
+            logger.info(f"Groq chunk {ci + 1}/{n_chunks} : {len(chunk_segs)} segments")
 
-        if not all_segs:
+        if not all_segments:
             return None
 
-        # Rapport de consommation
         _report_groq_usage(api_keys[last_key_idx], total_consumed_s, economy_url)
 
         # Fusion finale
         srt_lines, text_parts = [], []
-        for idx, (s, e, t) in enumerate(all_segs, 1):
-            srt_lines.append(f"{idx}\n{_to_srt_time(s)} --> {_to_srt_time(e)}\n{t}\n")
-            text_parts.append(t)
+        for seg in all_segments:
+            text_parts.append(seg["text"])
+            srt_lines.append(
+                f"{seg['index']}\n{_to_srt_time(seg['start_s'])} "
+                f"--> {_to_srt_time(seg['end_s'])}\n{seg['text']}\n"
+            )
 
         full_text = " ".join(text_parts)
         srt_out.write_text("\n".join(srt_lines), encoding="utf-8")
@@ -533,10 +570,15 @@ def _transcribe_via_groq(
             (video_path.parent / f"chunk_{ci}.json").unlink(missing_ok=True)
 
         logger.info(
-            f"Groq fusion finale: {len(srt_lines)} segments",
+            f"Groq fusion finale: {len(all_segments)} segments",
             extra={"language": language},
         )
-        return {"text": full_text, "language": language}
+        return {
+            "text": full_text,
+            "language": language,
+            "segments": all_segments,
+            "model": "whisper-large-v3-turbo",
+        }
 
     except Exception:
         logger.exception("Groq transcription error")

@@ -440,7 +440,12 @@ async def run_pipeline(
         if "filtering" not in completed:
             tx_data = await load_step_data(job_id, "transcribing") or {}
             _step_start["filtering"] = _time.time()
-            result = await step_filter(job_id, tx_data.get("raw_srt", ""), tx_data.get("text", ""))
+            result = await step_filter(
+                job_id,
+                tx_data.get("raw_srt", ""),
+                tx_data.get("text", ""),
+                segments_json=tx_data.get("segments"),
+            )
             metrics.record_step("filtering", duration_s=_time.time() - _step_start["filtering"])
             if not result.success:
                 raise RuntimeError(f"Etape filter echouee: {result.error}")
