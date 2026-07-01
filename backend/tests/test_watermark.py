@@ -1,75 +1,35 @@
-"""Tests for core/pipeline/watermark.py — PNG watermark generation."""
+"""Tests for core/pipeline/watermark.py — sporadic watermark generation & bounds."""
 
 from __future__ import annotations
-
-import struct
 
 
 from core.pipeline.watermark import (
     _generate_watermark_png,
     _get_watermark_bounds,
+    _compute_sporadic_timecodes,
+    _build_sporadic_drawtext_filters,
 )
 
 
-def _is_png(data: bytes) -> bool:
-    """Check that *data* looks like a valid PNG: 8-byte magic + IHDR chunk."""
-    if len(data) < 24:
-        return False
-    signature = b"\x89PNG\r\n\x1a\n"
-    if data[:8] != signature:
-        return False
-    # First chunk should be IHDR (length 4 bytes + 'IHDR' 4 bytes)
-    _ = struct.unpack(">I", data[8:12])[0]
-    if data[12:16] != b"IHDR":
-        return False
-    return True
-
-
 class TestGenerateWatermarkPng:
-    """Tests that _generate_watermark_png returns valid PNG bytes."""
+    """_generate_watermark_png est obsolete — retourne toujours None."""
 
-    def test_fixed_logo_returns_bytes(self):
-        result = _generate_watermark_png(1280, 720, mode="fixed_logo")
-        assert result is not None, "Watermark should be generated even without font file (uses default)"
-        assert isinstance(result, bytes)
-        assert len(result) > 0
+    def test_returns_none(self):
+        result = _generate_watermark_png(1280, 720)
+        assert result is None, "PNG generation is obsolete"
 
-    def test_fixed_logo_is_valid_png(self):
-        result = _generate_watermark_png(1280, 720, mode="fixed_logo")
-        assert result is not None
-        assert _is_png(result), "Output should be a valid PNG"
+    def test_with_text_returns_none(self):
+        result = _generate_watermark_png(1280, 720, text="Custom")
+        assert result is None
 
-    def test_tiling_mode_returns_bytes(self):
-        result = _generate_watermark_png(640, 480, mode="tiling")
-        assert result is not None
-        assert isinstance(result, bytes)
-        assert len(result) > 0
+    def test_with_mode_returns_none(self):
+        result = _generate_watermark_png(1280, 720, mode="sporadic")
+        assert result is None
 
-    def test_tiling_mode_is_valid_png(self):
-        result = _generate_watermark_png(640, 480, mode="tiling")
-        assert result is not None
-        assert _is_png(result), "Output should be a valid PNG"
-
-    def test_custom_text(self):
-        result = _generate_watermark_png(1280, 720, text="Custom Text", mode="fixed_logo")
-        assert result is not None
-        assert _is_png(result)
-
-    def test_top_left_position(self):
-        result = _generate_watermark_png(1280, 720, position="top-left")
-        assert result is not None
-        assert _is_png(result)
-
-    def test_different_resolutions(self):
+    def test_any_resolution_returns_none(self):
         for w, h in [(640, 360), (1920, 1080), (480, 480)]:
-            result = _generate_watermark_png(w, h, mode="fixed_logo")
-            assert result is not None, f"Watermark failed for {w}x{h}"
-            assert _is_png(result), f"PNG validation failed for {w}x{h}"
-
-    def test_bg_opacity_zero(self):
-        result = _generate_watermark_png(1280, 720, bg_opacity=0.0)
-        assert result is not None
-        assert _is_png(result)
+            result = _generate_watermark_png(w, h)
+            assert result is None, f"Should return None for {w}x{h}"
 
 
 class TestGetWatermarkBounds:
@@ -97,3 +57,61 @@ class TestGetWatermarkBounds:
         """Unknown position falls back to top-right."""
         bounds = _get_watermark_bounds(1280, 720, "unknown-pos")
         assert len(bounds) == 4
+
+
+class TestSporadicTimecodes:
+    """Tests for _compute_sporadic_timecodes."""
+
+    def test_returns_list_of_tuples(self):
+        timecodes = _compute_sporadic_timecodes(120.0)
+        assert isinstance(timecodes, list)
+        assert len(timecodes) > 0
+        for start, end in timecodes:
+            assert isinstance(start, float)
+            assert isinstance(end, float)
+            assert start < end
+
+    def test_starts_after_5_seconds(self):
+        timecodes = _compute_sporadic_timecodes(120.0)
+        first_start = timecodes[0][0]
+        assert first_start >= 5.0, "First sporadic should start after 5s"
+
+    def test_respects_duration(self):
+        timecodes = _compute_sporadic_timecodes(30.0, interval=15, text_duration=4)
+        for start, end in timecodes:
+            assert end <= 30.0
+
+
+class TestSporadicDrawtextFilters:
+    """Tests for _build_sporadic_drawtext_filters."""
+
+    def test_empty_input_returns_empty(self):
+        chain, label = _build_sporadic_drawtext_filters(
+            1280, 720, "", [], opacity=0.6
+        )
+        assert chain == ""
+        assert label == "base"
+
+    def test_no_timecodes_returns_empty(self):
+        chain, label = _build_sporadic_drawtext_filters(
+            1280, 720, "Hello", [], opacity=0.6
+        )
+        assert chain == ""
+
+    def test_returns_filter_string(self):
+        timecodes = [(5.0, 9.0)]
+        chain, label = _build_sporadic_drawtext_filters(
+            1280, 720, "Hello", timecodes, opacity=0.6
+        )
+        assert "drawtext" in chain
+        assert "text='Hello'" in chain or "text='Hello" in chain
+        assert label == "s0"
+
+    def test_multiple_timecodes(self):
+        timecodes = [(5.0, 9.0), (20.0, 24.0)]
+        chain, label = _build_sporadic_drawtext_filters(
+            1280, 720, "Test", timecodes, opacity=0.6
+        )
+        assert "s0" in chain
+        assert "s1" in chain
+        assert label == "s1"

@@ -753,6 +753,9 @@ async def run_pipeline(
         # ÉTAPE : Watermark PNG
         if "watermark" not in completed:
             result = await step_watermark(job_id, user_id)
+            wm_data = dict(result.data)
+            wm_data["encoding_time_s"] = _time.time() - _step_start.get("watermark", _time.time())
+            await save_step_data(job_id, "watermark", wm_data)
             if result.data.get("watermark_generated") and "watermark_png" in result.files:
                 await save_pipeline_file(job_id, "watermark", "watermark_png", result.files["watermark_png"])
             await mark_step_completed(job_id, "watermark")
@@ -864,6 +867,14 @@ async def run_pipeline(
                 if isinstance(burn_src, StepResult) and burn_src.files and "burned_mp4" in burn_src.files:
                     await save_pipeline_file(job_id, "burning", "burned_source_mp4", burn_src.files["burned_mp4"])
 
+                _burn_data = {}
+                if hasattr(burn_tgt, "data"):
+                    _burn_data.update(burn_tgt.data)
+                _burn_data["encoding_time_s"] = _time.time() - _step_start.get("burning", _time.time())
+                _burn_data["hwaccel"] = burn_tgt.data.get("hwaccel", "libx264") if hasattr(burn_tgt, "data") else "libx264"
+                _burn_data["burn_ok_tgt"] = True
+                _burn_data["burn_ok_src"] = isinstance(burn_src, StepResult) and burn_src.success and "burned_mp4" in (burn_src.files or {})
+                await save_step_data(job_id, "burning", _burn_data)
                 await mark_step_completed(job_id, "burning")
                 metrics.set_burn_metrics(
                     mode=burn_tgt.data.get("burn_mode", "ass") if hasattr(burn_tgt, "data") else "ass",

@@ -128,9 +128,9 @@ class Settings:
     ANALYSIS_WORKER_QUEUE: str = "video_analysis"
     VIDEO_SHORT_MAX_SECONDS: int = 120
     VIDEO_MAX_SECONDS: int = _get_int("max_video_duration_s", 5400)
-    WATERMARK_TEXT: str = _get("watermark_text", "Subtitled by Subvox")
+    WATERMARK_TEXT: str = _get("watermark_text", "")
     WATERMARK_LOGO_PATH: str = ""
-    WATERMARK_MODE: str = "fixed_text"
+    WATERMARK_MODE: str = "sporadic"
     WATERMARK_POSITION: str = "top-right"
     WATERMARK_OPACITY: float = 1.0
     WATERMARK_SPORADIC_ENABLED: bool = True

@@ -67,6 +67,32 @@ def _init_ffmpeg_caps() -> tuple[bool, bool]:
 
 _LIBASS_OK: bool = False
 _DRAWTEXT_OK: bool = False
+_HWACCEL_ENCODER: str | None = None
+
+
+def _detect_hwaccel() -> str:
+    """Detecte le codec materiel dispo : videotoolbox > nvenc > vaapi > qsv > libx264.
+
+    Le resultat est mis en cache pour les appels suivants.
+    """
+    global _HWACCEL_ENCODER
+    if _HWACCEL_ENCODER is not None:
+        return _HWACCEL_ENCODER
+    ffmpeg = _ffmpeg_path()
+    try:
+        r = subprocess.run(
+            [ffmpeg, "-encoders"], capture_output=True, timeout=10, text=True
+        )
+        for codec in ["h264_videotoolbox", "h264_nvenc", "h264_vaapi", "h264_qsv"]:
+            if codec in r.stdout:
+                _HWACCEL_ENCODER = codec
+                logger.info("HW accel detecte", extra={"encoder": codec})
+                return codec
+    except Exception:
+        pass
+    _HWACCEL_ENCODER = "libx264"
+    logger.info("HW accel non disponible, fallback libx264")
+    return "libx264"
 
 
 def init_ffmpeg_caps() -> tuple[bool, bool]:
@@ -87,26 +113,55 @@ def get_drawtext_ok() -> bool:
 def _get_ffmpeg_encoding_options() -> list[str]:
     """
     Options video FFmpeg optimisees pour lecture fluide sur web (HTML5 <video>).
+
+    Utilise l'acceleration materielle dispo via _detect_hwaccel().
+    Les codecs GPU (videotoolbox, nvenc, vaapi, qsv) gerent
+    le debit/qualite via -b:v, pas de -preset/-crf.
     """
-    return [
+    encoder = _detect_hwaccel()
+
+    if encoder == "libx264":
+        return [
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
+            "-crf",
+            "20",
+            "-g",
+            "60",
+            "-keyint_min",
+            "30",
+            "-sc_threshold",
+            "0",
+            "-bf",
+            "2",
+            "-profile:v",
+            "high",
+            "-level",
+            "4.2",
+            "-movflags",
+            "+faststart",
+            "-muxdelay",
+            "0",
+            "-pix_fmt",
+            "yuv420p",
+            "-threads",
+            "0",
+        ]
+
+    # ── Hardware encoder ──────────────────────────────────────────────
+    base_opts = [
         "-c:v",
-        "libx264",
-        "-preset",
-        "fast",
-        "-crf",
-        "20",
+        encoder,
+        "-b:v",
+        "5M",
         "-g",
         "60",
         "-keyint_min",
         "30",
-        "-sc_threshold",
-        "0",
         "-bf",
         "2",
-        "-profile:v",
-        "high",
-        "-level",
-        "4.2",
         "-movflags",
         "+faststart",
         "-muxdelay",
@@ -116,6 +171,16 @@ def _get_ffmpeg_encoding_options() -> list[str]:
         "-threads",
         "0",
     ]
+
+    # Tuning par encodeur
+    if encoder == "h264_videotoolbox":
+        base_opts.extend(["-profile", "high"])
+    elif encoder == "h264_nvenc":
+        base_opts.extend(["-profile:v", "high", "-rc", "vbr"])
+    elif encoder == "h264_vaapi":
+        base_opts.extend(["-profile:v", "high", "-rc_mode", "VBR"])
+
+    return base_opts
 
 
 def _get_video_dims(video: "Path") -> tuple[int, int]:
