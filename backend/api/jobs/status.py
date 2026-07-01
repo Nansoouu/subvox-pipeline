@@ -22,6 +22,29 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+@router.get("/queue-stats")
+async def get_queue_stats():
+    """Retourne les statistiques de la file d'attente."""
+    async with get_conn() as conn:
+        active = await conn.fetchval(
+            "SELECT COUNT(*) FROM jobs WHERE status IN ('downloading','transcribing','translating','burning','uploading')"
+        )
+        queued = await conn.fetchval(
+            "SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND created_at > now() - interval '2 hours'"
+        )
+        avg_dur = await conn.fetchval(
+            "SELECT COALESCE(AVG(duration_s), 0) FROM jobs WHERE status = 'done' AND updated_at > now() - interval '1 hour'"
+        )
+    active_count = int(active or 0)
+    queued_count = int(queued or 0)
+    estimated_wait_s = int(queued_count * (float(avg_dur or 90) + 30))
+    return {
+        "active_count": active_count,
+        "queued_count": queued_count,
+        "estimated_wait_s": estimated_wait_s,
+    }
+
+
 @router.get("/{job_id}")
 async def get_job_redirect(job_id: str):
     """Redirige /jobs/{id} vers /jobs/{id}/status (pour compatibilité frontend)."""

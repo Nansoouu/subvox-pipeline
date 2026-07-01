@@ -57,11 +57,15 @@ ECONOMY_PROXY_ROUTES = [
 ]
 
 
-@app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/billing/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/rewards/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-@app.api_route("/credentials/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def proxy_to_economy(path: str, request: Request):
+@app.api_route("/auth", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/billing", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/billing/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/rewards", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/rewards/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/credentials", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+@app.api_route("/credentials/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+async def proxy_to_economy(request: Request, path: str = ""):
     """Forward auth/billing/rewards/credentials requests to Economy service."""
     url = f"{ECONOMY_URL}/{request.url.path.lstrip('/')}"
     if request.url.query:
