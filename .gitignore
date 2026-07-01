@@ -11,3 +11,8 @@ dist/
 *.log
 storage/*.mp4
 run/logs/
+
+# Hermes Agent (local AI config, never commit)
+.hermes/
+.hermes.md
+AGENTS.md
