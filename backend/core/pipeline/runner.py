@@ -266,7 +266,7 @@ async def run_pipeline(
     is_resume = len(completed) > 0
     if is_resume:
         attempts = await increment_resume_attempts(job_id)
-        if attempts > 3:
+        if attempts > 10:
             error_msg = f"Trop de tentatives de reprise ({attempts}) -- abandon"
             logger.error(error_msg, extra=log_extra)
             raise RuntimeError(error_msg)
