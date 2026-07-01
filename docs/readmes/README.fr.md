@@ -13,13 +13,14 @@
 </p>
 
 <p align="center">
-  <a href="docs/readmes/README.es.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇪🇸-Español-green" alt="Español"></a>
-  <a href="docs/readmes/README.pt.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇵🇹-Português-brightgreen" alt="Português"></a>
-  <a href="docs/readmes/README.de.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇩🇪-Deutsch-orange" alt="Deutsch"></a>
-  <a href="docs/readmes/README.it.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇮🇹-Italiano-red" alt="Italiano"></a>
-  <a href="docs/readmes/README.ja.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇯🇵-日本語-blueviolet" alt="日本語"></a>
-  <a href="docs/readmes/README.zh.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇨🇳-中文-critical" alt="中文"></a>
-  <a href="docs/readmes/README.ar.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇸🇦-العربية-lightgrey" alt="العربية"></a>
+  <a href="../../README.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇬🇧-English-white" alt="English"></a>
+  <a href="README.es.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇪🇸-Español-green" alt="Español"></a>
+  <a href="README.pt.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇵🇹-Português-brightgreen" alt="Português"></a>
+  <a href="README.de.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇩🇪-Deutsch-orange" alt="Deutsch"></a>
+  <a href="README.it.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇮🇹-Italiano-red" alt="Italiano"></a>
+  <a href="README.ja.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇯🇵-日本語-blueviolet" alt="日本語"></a>
+  <a href="README.zh.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇨🇳-中文-critical" alt="中文"></a>
+  <a href="README.ar.md" style="text-decoration:none"><img src="https://img.shields.io/badge/🇸🇦-العربية-lightgrey" alt="العربية"></a>
 </p>
 
 <p align="center">
