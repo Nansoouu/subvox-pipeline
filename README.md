@@ -21,8 +21,14 @@
 </p>
 
 <p align="center">
-  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Français-blue" alt="Français"></a>
-  <a href="README.es.md"><img src="https://img.shields.io/badge/🇪🇸-Español-green" alt="Español"></a>
+  <a href="docs/readmes/README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Français-blue" alt="Français"></a>
+  <a href="docs/readmes/README.es.md"><img src="https://img.shields.io/badge/🇪🇸-Español-green" alt="Español"></a>
+  <a href="docs/readmes/README.pt.md"><img src="https://img.shields.io/badge/🇵🇹-Português-brightgreen" alt="Português"></a>
+  <a href="docs/readmes/README.de.md"><img src="https://img.shields.io/badge/🇩🇪-Deutsch-orange" alt="Deutsch"></a>
+  <a href="docs/readmes/README.it.md"><img src="https://img.shields.io/badge/🇮🇹-Italiano-red" alt="Italiano"></a>
+  <a href="docs/readmes/README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-日本語-blueviolet" alt="日本語"></a>
+  <a href="docs/readmes/README.zh.md"><img src="https://img.shields.io/badge/🇨🇳-中文-critical" alt="中文"></a>
+  <a href="docs/readmes/README.ar.md"><img src="https://img.shields.io/badge/🇸🇦-العربية-lightgrey" alt="العربية"></a>
 </p>
 
 <p align="center">  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">

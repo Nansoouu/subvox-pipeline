@@ -8,8 +8,8 @@
 <h1 align="center">Subvox Pipeline</h1>
 
 <p align="center">
-  <strong>El motor open-source de traducción de vídeo.</strong><br/>
-  Descargar. Transcribir. Traducir. Incrustar. Una pipeline, cualquier idioma.
+  <strong>O mecanismo open-source de tradução de vídeo.</strong><br/>
+  Baixar. Transcrever. Traduzir. Incorporar. Um pipeline, qualquer idioma.
 </p>
 
 <p align="center">
@@ -21,7 +21,8 @@
 </p>
 
 <p align="center">
-  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Versión%20en%20francés-blue" alt="Francés"></a>
+  <a href="README.fr.md"><img src="https://img.shields.io/badge/🇫🇷-Français-blue" alt="Français"></a>
+  <a href="README.es.md"><img src="https://img.shields.io/badge/🇪🇸-Español-green" alt="Español"></a>
 </p>
 
 <p align="center">  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -37,17 +38,17 @@
 
 ## ✨ Story
 
-> Tengo 35 años. Durante 10 años dirigí una empresa. Luego descubrí la tecnología.
+> Tenho 35 anos. Durante 10 anos geri uma empresa. Depois descobri a tecnologia.
 >
-> No fue un cambio de carrera. Fue una revelación. La posibilidad de construir, desde mi terminal, herramientas que cruzan fronteras.
+> Não foi uma mudança de carreira. Foi uma revelação. A capacidade de construir, a partir do meu terminal, ferramentas que cruzam fronteiras.
 >
-> Subvox nació de esta obsesión: ¿y si pudieras tomar cualquier vídeo, un discurso político coreano, un tutorial en alemán, una conferencia en árabe, y hacerlo accesible en tu idioma nativo, en minutos, sin perder la voz, el tono, la intención?
+> Subvox nasceu desta obsessão: e se pudesses pegar em qualquer vídeo, um discurso político coreano, um tutorial alemão, uma conferência árabe, e torná-lo acessível na tua língua materna, em minutos, sem perder a voz, o tom, a intenção?
 >
-> Subvox también se trata de contribuir como comunidad para hacer accesible la traducción de vídeo para todos. A diferencia de **Veed.io**, **Kapwing**, **Descript** u **Opus Clip**, gigantes que cobran una fortuna por lo que debería ser gratuito y que limitan mucho. Subvox es abierto, transparente y construido por quienes lo usan.
+> Subvox é também sobre contribuir como comunidade para tornar a tradução de vídeo acessível a todos. Ao contrário do **Veed.io**, **Kapwing**, **Descript** ou **Opus Clip**, gigantes que cobram uma fortuna pelo que deveria ser gratuito e que limitam muito. Subvox é aberto, transparente e construído por quem o utiliza.
 >
-> Es un proyecto en solitario, construido commit a commit, porque creo que la tecnología debería pertenecer a todos. No solo a quienes hablan inglés.
+> É um projeto a solo, construído commit a commit, porque acredito que a tecnologia deve pertencer a todos. Não apenas a quem fala inglês.
 >
-> Este pipeline es el corazón técnico. El resto, wallets, tokens, economía, vive en otro lado. Aquí está la máquina para traducir el mundo. Libre. Abierto. Tuyo.
+> Este pipeline é o coração técnico. O resto, wallets, tokens, economia, vive noutro lugar. Aqui está a máquina de traduzir o mundo. Livre. Aberto. Teu.
 >
 > *Nansou*
 
@@ -57,45 +58,45 @@
 
 | Step | Description |
 |---|---|
-| **⬇️ Download** | Obtiene vídeo de X/Twitter, YouTube o URL directa |
-| **🎙️ Transcribe** | Transcripción de audio via Groq (Whisper), 20+ idiomas |
-| **🌐 Translate** | Traducción LLM (DeepSeek / OpenAI) al idioma destino |
-| **🎬 Burn** | Incrustación de subtítulos en el vídeo (ffmpeg/libass) |
-| **☁️ Upload** | Almacenamiento local o S3 del resultado final |
+| **⬇️ Download** | Obtém vídeo do X/Twitter, YouTube ou URL direta |
+| **🎙️ Transcribe** | Transcrição de áudio via Groq (Whisper), 20+ idiomas |
+| **🌐 Translate** | Tradução LLM (DeepSeek / OpenAI) para o idioma de destino |
+| **🎬 Burn** | Incrustação de legendas no vídeo (ffmpeg/libass) |
+| **☁️ Upload** | Armazenamento local ou S3 do resultado final |
 
-**Bonus:** Exportación VTT/SRT, watermark auto, detección de escenas, análisis de contenido.
+**Bónus:** Exportação VTT/SRT, watermark automático, deteção de cenas, análise de conteúdo.
 
 ---
 
-## 🎬 La pipeline vista por el usuario
+## 🎬 O pipeline visto pelo utilizador
 
 ```
-1. Pegas un enlace de vídeo
+1. Colas um link de vídeo
    │  YouTube, X/Twitter, TikTok, Instagram, Facebook...
-   │  El validador comprueba en 2 segundos si es accesible
+   │  O validador verifica em 2 segundos se é acessível
    ▼
-2. Descarga
-   │  yt-dlp obtiene el vídeo (hasta 4K)
+2. Download
+   │  yt-dlp obtém o vídeo (até 4K)
    ▼
-3. Transcripción de audio
-   │  Groq Whisper convierte el audio a texto
-   │  Soporta 20+ idiomas
+3. Transcrição de áudio
+   │  Groq Whisper converte áudio em texto
+   │  Suporta 20+ idiomas
    ▼
-4. Traducción
-   │  DeepSeek / OpenAI traduce los subtítulos
-   │  En el idioma que elijas
+4. Tradução
+   │  DeepSeek / OpenAI traduz as legendas
+   │  No idioma à tua escolha
    ▼
-5. Incrustación
-   │  ffmpeg + libass incrustan los subtítulos en el vídeo
-   │  Watermark auto, estilo personalizable
+5. Incrustação
+   │  ffmpeg + libass incrustam as legendas no vídeo
+   │  Watermark automático, estilo personalizável
    ▼
 6. Resultado
-   │  Vídeo subtitulado, listo para compartir
-   │  Exportación SRT/VTT disponible
+   │  Vídeo legendado, pronto para partilhar
+   │  Exportação SRT/VTT disponível
 ```
 
-**Tiempo total:** 2-5 minutos para un vídeo de 3 minutos.
-**Sin necesidad de programar.** Pega un enlace, elige un idioma, obtén un vídeo traducido.
+**Tempo total:** 2-5 minutos para um vídeo de 3 minutos.
+**Sem necessidade de programar.** Cola um link, escolhe um idioma, obtém um vídeo traduzido.
 
 ---
 
@@ -125,16 +126,16 @@
 
 ## 🚀 Quick Start
 
-### Con Docker (recomendado)
+### Com Docker (recomendado)
 
 ```bash
 # 1. Clone
 git clone https://github.com/Nansouoouu/subvox-pipeline.git
 cd subvox-pipeline
 
-# 2. Iniciar todo el stack
-export GROQ_API_KEY="tu_clave_groq"
-export DEEPSEEK_API_KEY="tu_clave_deepseek"
+# 2. Iniciar todo o stack
+export GROQ_API_KEY="tua_chave_groq"
+export DEEPSEEK_API_KEY="tua_chave_deepseek"
 docker compose up -d
 
 # 3. Verificar
@@ -160,46 +161,46 @@ uvicorn backend.main:app --reload --port 8000
 
 ## 📡 API
 
-| Ruta | Método | Descripción |
+| Rota | Método | Descrição |
 |---|---|---|
-| `/jobs/feed` | GET | Últimas traducciones públicas |
-| `/jobs/{id}/status` | GET | Estado del trabajo |
-| `/jobs/{id}/subtitles` | GET | Subtítulos generados |
+| `/jobs/feed` | GET | Últimas traduções públicas |
+| `/jobs/{id}/status` | GET | Estado do trabalho |
+| `/jobs/{id}/subtitles` | GET | Legendas geradas |
 | `/health` | GET | Health check |
 
-La autenticación y gestión de tokens son manejadas por un servicio dedicado (privado).
+A autenticação e gestão de tokens são tratadas por um serviço dedicado (privado).
 
 ---
 
 ## 🧩 Stack
 
-| Componente | Tecnología |
+| Componente | Tecnologia |
 |---|---|
 | API | Python 3.14 / FastAPI |
 | Queue | Celery + Redis |
 | Video | FFmpeg 7 |
 | Transcription | Groq (Whisper) |
-> **Nota:** Groq ofrece 2 horas de transcripción gratuita al día. Perfecto para desarrollo y proyectos pequeños.
-| Traducción | DeepSeek / OpenAI |
+> **Nota:** A Groq oferece 2 horas de transcrição gratuita por dia. Perfeito para desenvolvimento e pequenos projetos.
+| Tradução | DeepSeek / OpenAI |
 | DB | PostgreSQL 16 |
 
 ---
 
 ## 🤝 Contributing
 
-Este proyecto es joven y está construido por una sola persona. Toda contribución es bienvenida:
+Este projeto é jovem e construído por uma só pessoa. Toda a contribuição é bem-vinda:
 
-- **Issues**: reporta un error, sugiere una funcionalidad
-- **PRs**: código, docs, tests, todo ayuda
-- **Discusiones**: comparte tu caso de uso
+- **Issues**: reporta um erro, sugere uma funcionalidade
+- **PRs**: código, docs, testes, tudo ajuda
+- **Discussões**: partilha o teu caso de uso
 
-El pipeline es **100% open-source** (MIT). La capa económica (wallets, tokens) permanece privada por razones de seguridad.
+O pipeline é **100% open-source** (MIT). A camada económica (wallets, tokens) permanece privada por razões de segurança.
 
 ---
 
-## 🙏 Agradecimientos
+## 🙏 Agradecimentos
 
-Subvox Pipeline se basa en proyectos open-source esenciales:
+Subvox Pipeline baseia-se em projetos open-source essenciais:
 
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) · [Groq](https://groq.com) · [DeepSeek](https://deepseek.com) · [OpenAI](https://openai.com) · [FFmpeg](https://ffmpeg.org) · [FastAPI](https://fastapi.tiangolo.com) · [Celery](https://docs.celeryq.dev) · [Redis](https://redis.io) · [PostgreSQL](https://postgresql.org)
 
@@ -207,4 +208,4 @@ Subvox Pipeline se basa en proyectos open-source esenciales:
 
 ## 📄 License
 
-MIT,  hecho con ❤️ por [Nansou](https://github.com/Nansouoouu)
+MIT,  feito com ❤️ por [Nansou](https://github.com/Nansouoouu)
