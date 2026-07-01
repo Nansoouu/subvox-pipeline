@@ -33,17 +33,17 @@
 
 ## ✨ Story
 
-> J'ai 35 ans. Pendant 10 ans, j'ai dirigé une entreprise — puis j'ai découvert la tech.
+> J'ai 35 ans. Pendant 10 ans, j'ai dirigé une entreprise. Puis j'ai découvert la tech.
 >
 > Ce n'était pas un pivot de carrière. C'était une révélation. La possibilité de construire, depuis mon terminal, des outils qui traversent les frontières.
 >
-> Subvox est né de cette obsession : et si on pouvait prendre n'importe quelle vidéo — un discours politique coréen, un tutoriel en allemand, une conférence en arabe — et la rendre accessible dans ta langue maternelle, en quelques minutes, sans perdre la voix, le ton, l'intention ?
+> Subvox est né de cette obsession : et si on pouvait prendre n'importe quelle vidéo, un discours politique coréen, un tutoriel en allemand, une conférence en arabe, et la rendre accessible dans ta langue maternelle, en quelques minutes, sans perdre la voix, le ton, l'intention ?
 >
 > C'est un projet solo, bâti commit par commit, parce que je crois que la technologie devrait appartenir à tout le monde. Pas juste à ceux qui parlent anglais.
 >
-> Ce pipeline est le cœur technique. Le reste — wallets, tokens, économie — vit ailleurs. Ici, c'est la machine à traduire le monde. Libre. Gratuite. Ouverte.
+> Ce pipeline est le cœur technique. Le reste, wallets, tokens, économie, vit ailleurs. Ici, c'est la machine à traduire le monde. Libre. Gratuite. Ouverte.
 >
-> — *Nansou*
+> *Nansou*
 
 ---
 
