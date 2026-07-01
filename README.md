@@ -33,17 +33,17 @@
 
 ## ✨ Story
 
-> I'm 35. For 10 years I ran a business. Then I discovered tech.
+> I am 35. For 10 years I ran a business. Then I discovered tech.
 >
-> It wasn't a career pivot. It was a revelation. The ability to build, from my terminal, tools that cross borders.
+> It was not a career pivot. It was a revelation. The ability to build, from my terminal, tools that cross borders.
 >
-> Subvox was born from this obsession: what if you could take any video — a Korean political speech, a German tutorial, an Arabic conference — and make it accessible in your native language, in minutes, without losing the voice, the tone, the intent?
+> Subvox was born from this obsession: what if you could take any video, a Korean political speech, a German tutorial, an Arabic conference, and make it accessible in your native language, in minutes, without losing the voice, the tone, the intent?
 >
-> Subvox is also about contributing as a community to make video translation accessible to everyone. Unlike **Veed.io**, **Kapwing**, **Descript**, or **Opus Clip** — giants that charge a fortune for what should be free, that limit your exports, that lock you into subscriptions — Subvox is open, transparent, and built by the people who use it.
+> Subvox is also about contributing as a community to make video translation accessible to everyone. Unlike **Veed.io**, **Kapwing**, **Descript**, or **Opus Clip**, giants that charge a fortune for what should be free, that limit your exports, that lock you into subscriptions. Subvox is open, transparent, and built by the people who use it.
 >
 > This is a solo project, built commit by commit, because I believe technology should belong to everyone. Not just those who speak English.
 >
-> This pipeline is the technical heart. The rest — wallets, tokens, economy — lives elsewhere. Here, it's the machine to translate the world. Free. Open. Yours.
+> This pipeline is the technical heart. The rest, wallets, tokens, economy, lives elsewhere. Here, it is the machine to translate the world. Free. Open. Yours.
 >
 > *Nansou*
 
@@ -185,13 +185,22 @@ L'authentification et la gestion des tokens sont gérées par un service dédié
 Ce projet est jeune et construit par une seule personne. Toute contribution est la bienvenue :
 
 - **Issues** : signalez un bug, proposez une feature
-- **PRs** : code, docs, tests — tout est bon à prendre
+- **PRs** : code, docs, tests ,  tout est bon à prendre
 - **Discussions** : partagez votre cas d'usage
 
 Le pipeline est **100% open-source** (MIT). L'économie (wallets, tokens) reste privée pour des raisons de sécurité.
 
 ---
 
+## 🙏 Remerciements
+
+Subvox Pipeline s'appuie sur des projets open-source essentiels :
+
+[yt-dlp](https://github.com/yt-dlp/yt-dlp) · [Groq](https://groq.com) · [DeepSeek](https://deepseek.com) · [OpenAI](https://openai.com)
+[FFmpeg](https://ffmpeg.org) · [FastAPI](https://fastapi.tiangolo.com) · [Celery](https://docs.celeryq.dev) · [Redis](https://redis.io) · [PostgreSQL](https://postgresql.org)
+
+---
+
 ## 📄 License
 
-MIT — fait avec ❤️ par [Nansou](https://github.com/Nansouoouu)
+MIT ,  fait avec ❤️ par [Nansou](https://github.com/Nansouoouu)
