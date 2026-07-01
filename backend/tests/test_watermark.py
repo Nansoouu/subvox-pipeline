@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import struct
 
-import pytest
 
 from core.pipeline.watermark import (
     _generate_watermark_png,
@@ -20,7 +19,7 @@ def _is_png(data: bytes) -> bool:
     if data[:8] != signature:
         return False
     # First chunk should be IHDR (length 4 bytes + 'IHDR' 4 bytes)
-    chunk_len = struct.unpack(">I", data[8:12])[0]
+    _ = struct.unpack(">I", data[8:12])[0]
     if data[12:16] != b"IHDR":
         return False
     return True

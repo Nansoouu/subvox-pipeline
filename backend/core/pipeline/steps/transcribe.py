@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from core.logging_setup import get_logger
+from core.config import settings
 from core.pipeline.groq import _transcribe_via_groq
 from core.pipeline.srt import _parse_srt
 from core.pipeline.steps._helpers import _get_tmp
@@ -33,10 +34,17 @@ async def step_transcribe(
         raise RuntimeError("Fichier source introuvable pour transcription")
 
     whisper_result = _transcribe_via_groq(
-        Path(source_mp4_path), srt_path, txt_path, groq_api_key
+        Path(source_mp4_path), srt_path, txt_path, groq_api_key,
+        economy_url=settings.ECONOMY_URL,
     )
     if not whisper_result:
-        raise RuntimeError("Transcription Groq echouee")
+        raise RuntimeError("Transcription Groq échouée")
+
+    # Vérifier si le quota est épuisé
+    if whisper_result.get("error") == "quota_exhausted":
+        msg = whisper_result.get("message", "Temps Groq épuisé")
+        logger.warning(msg)
+        raise RuntimeError(msg)
 
     transcript_tx = whisper_result.get("text", "")
     source_lang = whisper_result.get("language", "en")

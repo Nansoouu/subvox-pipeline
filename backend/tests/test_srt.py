@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from core.pipeline.srt import (
     _to_srt_time,
