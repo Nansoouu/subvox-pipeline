@@ -130,8 +130,8 @@ async def step_download(
         extra=log_extra,
     )
 
-    # Upload source vers Supabase
-    if settings.SUPABASE_URL and source_mp4.exists():
+    # Upload source vers stockage local
+    if source_mp4.exists():
         try:
             source_upload_res = await _upload_video(
                 str(job_id), source_mp4, filename=f"source_{job_id}.mp4"

@@ -28,7 +28,7 @@ API = "http://localhost:8001"
 DB = "postgresql://postgres:***@localhost:5432/subvox"
 WALLET = "5Pe2BifjrwGoYYKVPyY1XwXBjHmsi6yC1GFLxyfTaDhf"
 TEST_URL = "https://www.youtube.com/watch?v=jNQXAC9IVRw"
-TEST_LANG = "it"
+TEST_LANG = "pt"
 JWT_SECRET = "change-me-in-production"
 OUT = "/tmp/subvox-economy-test.json"
 
@@ -51,6 +51,11 @@ def check(name: str, ok: bool, detail: str = ""):
 
 async def main():
     global passed, failed
+    import jwt as pyjwt
+    from uuid import uuid4
+
+    # URL unique pour eviter la deduplication entre les runs
+    unique_url = f"{TEST_URL}&t={uuid4().hex[:8]}"
 
     print("=" * 60)
     print("TEST ECONOMIE — Circuit complet")
@@ -73,7 +78,7 @@ async def main():
         # ── 1. PREFLIGHT — verification du cout ──
         print("1. PREFLIGHT")
         r = await http.post(f"{API}/jobs/preflight", json={
-            "source_url": TEST_URL,
+            "source_url": unique_url,
             "target_langs": [TEST_LANG],
             "pool": "community",
         })
@@ -94,7 +99,7 @@ async def main():
         r = await http.post(
             f"{API}/jobs/submit",
             json={
-                "source_url": TEST_URL,
+                "source_url": unique_url,
                 "target_lang": TEST_LANG,
                 "mode": "translate",
                 "pool": "community",
@@ -133,20 +138,22 @@ async def main():
 
         # ── 4. TRANSACTIONS enregistrees ──
         print("\n4. TRANSACTIONS")
+        # deduct_subvox n'enregistre pas le job_id, on cherche par wallet
         txns = await db.fetch(
-            "SELECT tx_type, amount, left(to_wallet,20) as to_addr, "
-            "left(job_id::text,8) as jid "
-            "FROM subvox_transactions WHERE job_id = $1",
-            job_id,
+            "SELECT tx_type, amount, left(from_wallet,20) as from_addr, "
+            "created_at FROM subvox_transactions "
+            "WHERE from_wallet = $1 AND created_at > now() - interval '5 minutes'"
+            "ORDER BY created_at DESC",
+            WALLET,
         )
         check("transactions > 0", len(txns) > 0, f"{len(txns)} enregistrees")
-        total_tx = 0
         for t in txns:
-            total_tx += t["amount"]
-            check(f"  {t['tx_type']}: {t['amount']} SUBVOX", True,
-                  f"→ {t['to_addr'] or 'pool'}")
+            check(f"transaction {t['tx_type']}: {t['amount']} SUBVOX", True,
+                  f"de {t['from_addr'][:16]}...")
         if txns:
-            check("montant total correspond", total_tx > 0, f"{total_tx} SUBVOX")
+            check("au moins 1 job_payment",
+                  any(t["tx_type"] == "job_payment" for t in txns),
+                  f"types: {[t['tx_type'] for t in txns]}")
 
         # ── 5. RESOLUTION DE CLE GROQ via API ──
         print("\n5. RESOLUTION DE CLE GROQ")
@@ -197,7 +204,7 @@ async def main():
         print("\n8. SOURCE-LANGUAGES (apres soumission)")
         r = await http.get(
             f"{API}/jobs/source-languages",
-            params={"source_url": TEST_URL},
+            params={"source_url": unique_url},
         )
         data = r.json()
         check("source-languages HTTP 200", r.status_code == 200)
@@ -208,7 +215,7 @@ async def main():
         print("\n9. BY-SOURCE (jobs groupes par URL)")
         r = await http.get(
             f"{API}/jobs/by-source",
-            params={"source_url": TEST_URL},
+            params={"source_url": unique_url},
         )
         data = r.json()
         check("by-source HTTP 200", r.status_code == 200)
