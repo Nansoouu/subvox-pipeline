@@ -208,6 +208,33 @@ The pipeline is **100% open-source** (MIT). The economy layer (wallets, tokens) 
 
 ---
 
+## 🌍 See it in action
+
+This pipeline is the engine behind **Subvox**, a real-world video translation platform built by and for the community.
+
+👉 **[Explore the Subvox ecosystem](https://github.com/Nansoouu/subvox)** — discover how the pipeline is used, learn the tokenomics, and find out how you can earn SUBVOX by contributing.
+
+### Real-world example
+
+1. A user pastes a Korean YouTube video link into the Subvox web app
+2. The pipeline downloads it via yt-dlp
+3. Groq Whisper transcribes the Korean speech to text
+4. DeepSeek translates it to French, Spanish, Arabic — whatever the user chose
+5. FFmpeg burns the subtitles into the video
+6. Minutes later, the video is ready to share — in their language
+
+That's it. One link, one click, any language.
+
+---
+
+## ⭐ Support the project
+
+If you find this project useful, **please give it a star** ⭐ on GitHub. It takes one second, and it helps me more than you know — it shows that real people use this, which helps the project grow, attract contributors, and keep improving.
+
+Every star is a small boost of motivation. Thank you ❤️
+
+---
+
 ## 🙏 Acknowledgments
 
 Subvox Pipeline relies on essential open-source projects:
