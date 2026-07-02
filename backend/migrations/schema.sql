@@ -204,6 +204,10 @@ CREATE TABLE IF NOT EXISTS welcome_missions (
     claim_tx        TEXT,
     claim_amount    BIGINT,
     bonus_credited  BOOLEAN DEFAULT FALSE,
+    tweet_url       TEXT,
+    x_username      TEXT,
+    tweet_verified_at TIMESTAMPTZ,
+    tweet_checked   BOOLEAN DEFAULT FALSE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (user_id)
 );
