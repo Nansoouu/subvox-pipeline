@@ -24,7 +24,8 @@ async def proxy_estimate_duration(request: Request):
             content=body,
             headers={"Content-Type": "application/json"},
         )
-    return r.json() if r.text else {}, r.status_code
+    content = r.json() if r.text else {}
+    return content
 
 
 @router.post("/submit")
@@ -36,4 +37,5 @@ async def proxy_submit(request: Request):
             content=body,
             headers={"Content-Type": "application/json"},
         )
-    return r.json() if r.text else {}, r.status_code
+    content = r.json() if r.text else {}
+    return content
