@@ -39,3 +39,44 @@ async def proxy_submit(request: Request):
         )
     content = r.json() if r.text else {}
     return content
+
+
+@router.post("/{job_id}/fork")
+async def proxy_fork(job_id: str, request: Request):
+    body = await request.body()
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.post(
+            f"{ECONOMY_URL}/jobs/{job_id}/fork",
+            content=body,
+            headers={"Content-Type": "application/json"},
+        )
+    return r.json() if r.text else {}, r.status_code
+
+
+@router.get("/{job_id}/stream")
+async def proxy_stream(job_id: str):
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.get(f"{ECONOMY_URL}/jobs/{job_id}/stream")
+    return r.json() if r.text else {}, r.status_code
+
+
+@router.get("/by-source")
+async def proxy_by_source(source_url: str, request: Request):
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.get(
+            f"{ECONOMY_URL}/jobs/by-source",
+            params={"source_url": source_url},
+            headers={"Content-Type": "application/json"},
+        )
+    return r.json() if r.text else {}, r.status_code
+
+
+@router.get("/by-source/status")
+async def proxy_by_source_status(source_url: str, request: Request):
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.get(
+            f"{ECONOMY_URL}/jobs/by-source/status",
+            params={"source_url": source_url},
+            headers={"Content-Type": "application/json"},
+        )
+    return r.json() if r.text else {}, r.status_code
