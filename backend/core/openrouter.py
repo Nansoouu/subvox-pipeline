@@ -190,6 +190,39 @@ async def call_openrouter(
         api_url = DEEPSEEK_URL
         api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
         if not api_key:
+            # Fallback: try community pool
+            try:
+                import httpx as _hx
+                _r = _hx.get(f"{settings.ECONOMY_URL}/billing/deepseek-key/pool", timeout=5)
+                if _r.status_code == 200:
+                    _d = _r.json()
+                    if _d.get("key"):
+                        api_key = _d["key"]
+                        logger.info("Clé DeepSeek du pool communautaire")
+            except Exception:
+                pass
+        if not api_key:
+            # Direct DB fallback
+            try:
+                import asyncio as _aio, asyncpg as _apg
+                from core.crypto import decrypt_groq_key as _dgk
+                async def _fetch_ds():
+                    _db = await _apg.connect(settings.DATABASE_URL)
+                    try:
+                        _row = await _db.fetchrow("SELECT deepseek_key_enc FROM subvox_deepseek_pool WHERE is_active = TRUE LIMIT 1")
+                        if _row:
+                            _dec = _dgk(_row["deepseek_key_enc"])
+                            if _dec: return _dec
+                        return None
+                    finally:
+                        await _db.close()
+                _pk = _aio.run(_fetch_ds())
+                if _pk:
+                    api_key = _pk
+                    logger.info("Clé DeepSeek du pool (DB direct)")
+            except Exception as _de:
+                logger.warning(f"DB DeepSeek pool failed: {_de}")
+        if not api_key:
             logger.warning("Aucune clé DEEPSEEK_API_KEY configurée")
             return None, 0, 0
         # Nettoyer le préfixe openrouter si présent
@@ -199,6 +232,14 @@ async def call_openrouter(
         # Fallback : DeepSeek
         api_url = DEEPSEEK_URL
         api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        if not api_key:
+            import httpx as _hx2
+            try:
+                _r2 = _hx2.get(f"{settings.ECONOMY_URL}/billing/deepseek-key/pool", timeout=5)
+                if _r2.status_code == 200 and _r2.json().get("key"):
+                    api_key = _r2.json()["key"]
+            except Exception:
+                pass
         if not api_key:
             logger.warning("Aucune clé API configurée pour le modèle %s", model)
             return None, 0, 0
