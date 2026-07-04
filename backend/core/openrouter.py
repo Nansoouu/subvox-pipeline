@@ -204,7 +204,8 @@ async def call_openrouter(
         if not api_key:
             # Direct DB fallback
             try:
-                import asyncio as _aio, asyncpg as _apg
+                import asyncio as _aio
+                import asyncpg as _apg
                 from core.crypto import decrypt_groq_key as _dgk
                 async def _fetch_ds():
                     _db = await _apg.connect(settings.DATABASE_URL)
@@ -212,7 +213,8 @@ async def call_openrouter(
                         _row = await _db.fetchrow("SELECT deepseek_key_enc FROM subvox_deepseek_pool WHERE is_active = TRUE LIMIT 1")
                         if _row:
                             _dec = _dgk(_row["deepseek_key_enc"])
-                            if _dec: return _dec
+                            if _dec:
+                                return _dec
                         return None
                     finally:
                         await _db.close()
