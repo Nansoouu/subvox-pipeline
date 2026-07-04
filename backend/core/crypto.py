@@ -23,10 +23,13 @@ def encrypt_groq_key(key: str) -> str:
 
 
 def decrypt_groq_key(encrypted: str) -> str:
-    """Déchiffrement AES-256-GCM. Fallback base64 en dev."""
+    """Déchiffrement AES-256-GCM. Fallback plaintext en dev."""
     if not settings.GROQ_ENCRYPTION_KEY:
         import base64
-        return base64.b64decode(encrypted).decode()
+        try:
+            return base64.b64decode(encrypted).decode()
+        except Exception:
+            return encrypted  # Already plaintext in dev
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
     raw = bytes.fromhex(encrypted)
