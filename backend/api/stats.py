@@ -10,6 +10,20 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+@router.post("/cta-click")
+async def track_cta_click():
+    """Track CTA button clicks (analytics placeholder)."""
+    logger.info("CTA click tracked")
+    return {"ok": True}
+
+
+@router.post("/i18n-log")
+async def log_i18n_error():
+    """Log i18n missing keys (fire-and-forget from frontend)."""
+    logger.info("i18n error logged")
+    return {"ok": True}
+
+
 @router.get("/counters")
 async def get_counters():
     """Aggregated platform stats for the hero counters bar."""
