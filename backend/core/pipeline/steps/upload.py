@@ -45,8 +45,9 @@ async def step_upload(
         local_path = local_dir / upload_filename
         import shutil
         shutil.copy2(burned_path, local_path)
-        storage_key = f"file://{local_path}"
-        logger.info(f"Saved locally: {storage_key}", extra=log_extra)
+        filename_only = Path(upload_filename).name
+        storage_key = f"/storage/{filename_only}"
+        logger.info(f"Saved locally: {local_path} serving at {storage_key}", extra=log_extra)
     else:
         storage_key = upload_res["storage_url"]
 

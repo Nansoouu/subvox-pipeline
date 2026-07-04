@@ -90,3 +90,23 @@ async def proxy_to_economy(request: Request, path: str = ""):
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "pipeline"}
+
+
+# ── Serve local storage files (dev mode) ─────────────────────
+import os as _os
+from pathlib import Path as _Path
+from fastapi.responses import FileResponse as _FileResponse
+
+
+@app.get("/storage/{filename:path}")
+async def serve_storage(filename: str):
+    # Check pipeline/storage/ first
+    base = _Path(_os.path.join(_os.path.dirname(__file__), "..", "storage")).resolve()
+    fp = base / filename
+    if fp.exists():
+        return _FileResponse(str(fp), media_type="video/mp4")
+    # Fallback to /tmp/subvox-output/
+    alt = _Path("/tmp/subvox-output") / filename
+    if alt.exists():
+        return _FileResponse(str(alt), media_type="video/mp4")
+    return {"error": "File not found"}, 404
