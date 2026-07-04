@@ -72,10 +72,9 @@ async def _force_done_status(
     storage_key: str,
     source_lang,
     thumbnail_url,
+    duration_s: int = 0,
 ) -> None:
-    """
-    Force le statut 'done' en DB apres upload reussi.
-    """
+    """Force le statut 'done' en DB apres upload reussi."""
     from core.db import direct_connect
 
     try:
@@ -88,6 +87,7 @@ async def _force_done_status(
                     storage_url   = $3,
                     source_lang   = $4,
                     thumbnail_url = $5,
+                    duration_s    = $6,
                     updated_at    = now()
                 WHERE id = $1
                   AND status != 'done'
@@ -97,6 +97,7 @@ async def _force_done_status(
                 storage_url,
                 source_lang,
                 thumbnail_url,
+                duration_s,
             )
         logger.info(f"DB status forcé → done pour {job_id[:8]}")
     except Exception as e:
@@ -291,6 +292,7 @@ def process_video_task(
                     storage_key=result.get("storage_key", ""),
                     source_lang=result.get("source_lang"),
                     thumbnail_url=result.get("thumbnail_url"),
+                    duration_s=int(result.get("duration_s", 0)),
                 )
             )
 
