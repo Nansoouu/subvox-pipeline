@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from core.logging_setup import get_logger
+from core.config import settings
 from core.pipeline.steps._helpers import _get_tmp
 from core.pipeline.steps._types import StepResult
 
@@ -37,9 +38,17 @@ async def step_upload(
 
     upload_res = await _upload_video(str(job_id), burned_path, filename=upload_filename)
     if not upload_res:
-        raise RuntimeError("Upload Supabase echoue")
-
-    storage_key = upload_res["storage_url"]
+        # Fallback: local storage (dev mode — no Supabase)
+        logger.info("Supabase upload failed — saving locally", extra=log_extra)
+        local_dir = Path(settings.LOCAL_STORAGE_DIR) if hasattr(settings, "LOCAL_STORAGE_DIR") else Path("/tmp/subvox-output")
+        local_dir.mkdir(parents=True, exist_ok=True)
+        local_path = local_dir / upload_filename
+        import shutil
+        shutil.copy2(burned_path, local_path)
+        storage_key = f"file://{local_path}"
+        logger.info(f"Saved locally: {storage_key}", extra=log_extra)
+    else:
+        storage_key = upload_res["storage_url"]
 
     file_size_mb = 0.0
     if burned_path.exists():
