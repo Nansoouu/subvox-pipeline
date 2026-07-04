@@ -891,6 +891,7 @@ async def run_pipeline(
                 if "uploading" not in completed:
                     return await _retry_burn_upload(
                         job_id, "upload", log_extra, step_upload, job_id,
+                        source_path=str(tmp / "burned_target.mp4"),
                     )
                 return StepResult(success=True, data={
                     "storage_url": storage_key or "",
