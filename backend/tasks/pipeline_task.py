@@ -213,6 +213,50 @@ def process_video_task(
         if not groq_key:
             groq_key = settings.GROQ_API_KEY or ""
         if not groq_key:
+            # Fallback: try to use a community pool key
+            try:
+                import httpx as _httpx
+                pool_resp = _httpx.get(
+                    f"{settings.ECONOMY_URL}/billing/groq-key/pool",
+                    timeout=5,
+                )
+                if pool_resp.status_code == 200:
+                    pool_data = pool_resp.json()
+                    if pool_data.get("key"):
+                        groq_key = pool_data["key"]
+                        logger.info("Clé Groq communautaire utilisée")
+            except Exception as pe:
+                logger.warning(f"Pool key fallback failed: {pe}")
+        if not groq_key:
+            # Direct DB fallback: query community pool keys directly
+            # (workaround for Economy API FastAPI compat issue)
+            try:
+                import asyncio as _aio2
+                import asyncpg as _apg
+                from core.crypto import decrypt_groq_key as _dgk
+
+                async def _fetch_pool_key():
+                    _db = await _apg.connect(settings.DATABASE_URL)
+                    try:
+                        _row = await _db.fetchrow(
+                            "SELECT groq_key_enc FROM subvox_groq_pool"
+                            " WHERE is_active = TRUE LIMIT 1"
+                        )
+                        if _row:
+                            _dec = _dgk(_row["groq_key_enc"])
+                            if _dec and _dec.startswith("gsk_"):
+                                return _dec
+                        return None
+                    finally:
+                        await _db.close()
+
+                _pk = _aio2.run(_fetch_pool_key())
+                if _pk:
+                    groq_key = _pk
+                    logger.info("Clé Groq du pool (DB direct)")
+            except Exception as _de:
+                logger.warning(f"DB pool key failed: {_de}")
+        if not groq_key:
             logger.warning("Aucune clé Groq disponible — la transcription échouera")
         # Si un _source_job_id est fourni, le pipeline peut skipper download + transcribe
         if _source_job_id:
