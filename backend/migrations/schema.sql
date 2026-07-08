@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     visitor_token       UUID,                                 -- anonymous session token
     visibility          TEXT NOT NULL DEFAULT 'public'
                         CHECK (visibility IN ('public', 'private', 'unlisted')),
+    parent_job_id       UUID REFERENCES jobs(id) ON DELETE SET NULL,   -- retraduction revenue sharing
     seo_slug            TEXT,
     seo_metadata        JSONB DEFAULT '{}',
     group_id            UUID,                                 -- multi-video group (X/Twitter threads, playlists)

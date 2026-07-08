@@ -103,6 +103,16 @@ async def _force_done_status(
                 duration_s,
             )
         logger.info(f"DB status forcé → done pour {job_id[:8]}")
+
+        # Phase 3.2: Créditer publisher pour retraduction
+        try:
+            from core.pipeline._runner_helpers import _credit_retraduction_publisher
+            await _credit_retraduction_publisher(job_id)
+        except ImportError:
+            pass
+        except Exception as cred_exc:
+            logger.warning(f"Retraduction credit failed in force_done: {cred_exc}")
+
     except Exception as e:
         logger.error(f"_force_done_status échoué: {e}")
 

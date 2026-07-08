@@ -542,6 +542,10 @@ async def _finalize_pipeline(
         extra=log_extra,
     )
 
+    # ── Phase 3.2 : Créditer le publisher original pour les retraductions ──
+    if _db_update_ok:
+        await _credit_retraduction_publisher(job_id, log_extra)
+
     return {
         "storage_url": storage_key,
         "summary": summary,
@@ -554,3 +558,96 @@ async def _finalize_pipeline(
         "source_sub_url": source_sub_url,
         "vtt_url": vtt_storage_url if soft_subs else "",
     }
+
+
+# ─── Phase 3.2 : Créditer le publisher original d'une retraduction ────────
+
+
+async def _credit_retraduction_publisher(job_id: str, log_extra: dict | None = None) -> bool:
+    """Crédite le publisher original quand une retraduction est terminée.
+
+    Quand un job a parent_job_id (retraduction), on crédite le wallet du
+    publisher original avec 50% du coût de la retraduction.
+    """
+    log_extra = log_extra or {}
+    try:
+        async with _direct() as conn:
+            # 1. Vérifier si ce job est une retraduction
+            row = await conn.fetchrow(
+                """SELECT j.parent_job_id, j.cost_breakdown, pj.user_id AS parent_user_id
+                   FROM jobs j
+                   JOIN jobs pj ON j.parent_job_id = pj.id
+                   WHERE j.id = $1
+                     AND j.parent_job_id IS NOT NULL
+                     AND j.status = 'done'""",
+                uuid.UUID(job_id),
+            )
+            if not row:
+                return False
+
+            cost_bd = row["cost_breakdown"]
+            if not cost_bd or not isinstance(cost_bd, dict):
+                return False
+
+            # Check if already credited (idempotency via cost_breakdown tracking)
+            if cost_bd.get("retraduction_credited_at"):
+                return False
+
+            publisher_share = cost_bd.get("publisher_share", 0)
+            parent_user_id = row["parent_user_id"]
+            parent_user_id_str = str(parent_user_id) if parent_user_id else None
+
+            if not parent_user_id_str or publisher_share <= 0:
+                return False
+
+            # 2. Ensure holder exists
+            await conn.execute(
+                """INSERT INTO subvox_token_holders (wallet_address, balance, staked_amount, total_earned, total_spent)
+                   VALUES ($1, 0, 0, 0, 0)
+                   ON CONFLICT (wallet_address) DO NOTHING""",
+                parent_user_id_str,
+            )
+
+            # 3. Credit publisher with 50% share
+            await conn.execute(
+                """UPDATE subvox_token_holders
+                   SET balance = balance + $1, total_earned = total_earned + $1, updated_at = now()
+                   WHERE wallet_address = $2""",
+                publisher_share, parent_user_id_str,
+            )
+
+            # 4. Record the transaction
+            await conn.execute(
+                """INSERT INTO subvox_transactions (from_wallet, to_wallet, amount, tx_type, job_id, metadata)
+                   VALUES ($1, $2, $3, $4, $5, $6::jsonb)""",
+                "retraduction_pool",
+                parent_user_id_str,
+                publisher_share,
+                "retraduction_publisher_reward",
+                uuid.UUID(job_id),
+                json.dumps({"reason": "retraduction_publisher_share", "pct": 50}),
+            )
+
+            # 5. Mark as credited (tracking flag — needs column, but we can use
+            #    cost_breakdown to avoid schema change)
+            existing_cb = dict(cost_bd) if cost_bd else {}
+            existing_cb["retraduction_credited_at"] = datetime.now(timezone.utc).isoformat()
+            await conn.execute(
+                "UPDATE jobs SET cost_breakdown = $1::jsonb WHERE id = $2",
+                json.dumps(existing_cb),
+                uuid.UUID(job_id),
+            )
+
+            logger.info(
+                f"Publisher credited {publisher_share} SUBVOX for retraduction "
+                f"job={job_id[:8]} parent_user={parent_user_id_str[:10]}",
+                extra=log_extra,
+            )
+            return True
+
+    except Exception as exc:
+        logger.warning(
+            "Retraduction publisher credit failed",
+            extra={"error": str(exc), "job_id": job_id[:8], **(log_extra or {})},
+        )
+        return False
