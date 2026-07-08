@@ -7,7 +7,7 @@ Produit une sortie JSON structurée avec segments, confiance, stats.
 from __future__ import annotations
 
 from core.logging_setup import get_logger
-from core.pipeline.srt import _parse_srt
+from core.pipeline.srt import _parse_srt, _parse_time_to_seconds
 from core.pipeline.steps._helpers import _get_tmp
 from core.pipeline.steps._types import StepResult
 
@@ -64,10 +64,20 @@ async def step_filter(
         blocks = _parse_srt(srt_raw)
         raw_segments = []
         for i, b in enumerate(blocks, 1):
+            # Parser le timecode SRT (format: "00:00:00,000 --> 00:00:00,000")
+            start_s, end_s = 0.0, 0.0
+            tc = b.get("timecode", "")
+            if " --> " in tc:
+                parts = tc.split(" --> ")
+                try:
+                    start_s = _parse_time_to_seconds(parts[0])
+                    end_s = _parse_time_to_seconds(parts[1])
+                except Exception:
+                    pass
             raw_segments.append({
                 "index": i,
-                "start_s": 0.0,
-                "end_s": 0.0,
+                "start_s": start_s,
+                "end_s": end_s,
                 "text": b.get("text", "").strip(),
                 "confidence": 0.0,
                 "no_speech_prob": 1.0,

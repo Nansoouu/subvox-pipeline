@@ -123,8 +123,8 @@ def _whisper_segment_to_dict(seg: dict, offset_s: float = 0.0) -> dict:
 
     Inclut les métriques de confiance : avg_logprob, no_speech_prob, compression_ratio.
     """
-    start = float(seg.get("start", 0)) + offset_s
-    end = float(seg.get("end", start + 2)) + offset_s
+    start = max(0, float(seg.get("start", 0)) + offset_s)
+    end = max(0.2, float(seg.get("end", start + 2)) + offset_s)
     text = seg.get("text", "").strip()
     return {
         "start_s": round(start, 3),
@@ -148,13 +148,29 @@ def _build_segments_list(
     Filtre les segments vides, ajoute l'index et la langue.
     """
     result = []
+    first_word_start = None
     for i, seg in enumerate(raw_segments, 1):
         d = _whisper_segment_to_dict(seg, offset_s)
         if not d["text"]:
             continue
+        # Détecter le premier mot parlé via word-level timestamps
+        words = seg.get("words", [])
+        if words and first_word_start is None:
+            first_word_start = float(words[0].get("start", 0)) + offset_s
         d["index"] = i
         d["language"] = language
         result.append(d)
+
+    # Décaler tous les segments du silence initial
+    if first_word_start and first_word_start > 0.5:
+        logger.info(
+            "Silence initial détecté, ajustement des timings",
+            extra={"first_word": round(first_word_start, 2)},
+        )
+        for d in result:
+            d["start_s"] = round(max(0, d["start_s"] - first_word_start + 0.1), 3)
+            d["end_s"] = round(max(0.2, d["end_s"] - first_word_start + 0.1), 3)
+
     return result
 
 
@@ -242,7 +258,7 @@ def _transcribe_via_groq(
                     data={
                         "model": "whisper-large-v3-turbo",
                         "response_format": "verbose_json",
-                        "timestamp_granularities[]": "segment",
+                        "timestamp_granularities[]": ["segment", "word"],
                     },
                 )
             if resp.status_code == 429:
@@ -388,8 +404,34 @@ def _transcribe_via_groq(
             if not raw_segments and not full_text:
                 return None
 
-            # Structurer les segments
-            segments = _build_segments_list(raw_segments, language)
+            # ── Détection du silence initial ────────────────────────────────
+            # Chercher quand l'audio dépasse -40dB (début de la voix)
+            silence_offset = 0.0
+            try:
+                probe = subprocess.run(
+                    [ffmpeg, "-i", str(audio_path), "-af", "silencedetect=noise=-40dB:d=0.3",
+                     "-f", "null", "-"],
+                    capture_output=True, text=True, timeout=30,
+                )
+                for line in probe.stderr.split("\n"):
+                    if "silence_end" in line:
+                        silence_offset = float(line.split("silence_end: ")[1].split(" ")[0])
+                        break
+                if silence_offset > 0.5:
+                    logger.info(
+                        "Silence initial détecté via ffmpeg",
+                        extra={"offset_s": round(silence_offset, 2)},
+                    )
+                    # Ajouter une petite marge de 0.2s après la fin du silence
+                    silence_offset = max(0, silence_offset - 0.2)
+            except Exception as exc:
+                logger.warning(
+                    "Détection silence échouée",
+                    extra={"error": str(exc)[:100]},
+                )
+
+            # Structurer les segments avec l'offset du silence initial
+            segments = _build_segments_list(raw_segments, language, offset_s=-silence_offset)
             total_duration_s = max((s["end_s"] for s in segments), default=estimated_duration_s)
             _report_groq_usage(api_keys[used_key_idx], int(total_duration_s), economy_url)
 

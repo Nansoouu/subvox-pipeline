@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import html
+from pathlib import Path
 
 from core.config import settings
 from core.logging_setup import get_logger
@@ -130,7 +131,7 @@ async def step_download(
         extra=log_extra,
     )
 
-    # Upload source vers stockage local
+        # Upload source vers stockage local
     if source_mp4.exists():
         try:
             source_upload_res = await _upload_video(
@@ -143,6 +144,16 @@ async def step_download(
                 )
         except Exception as e:
             logger.error(f"Upload source echoue: {e}", extra=log_extra)
+        if not source_storage_url or source_storage_url.startswith("file://"):
+            # Fallback local (dev mode, no Supabase) — use /storage/ URL
+            import shutil
+            storage_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "storage"
+            storage_dir.mkdir(parents=True, exist_ok=True)
+            local_path = storage_dir / f"source_{job_id}.mp4"
+            if not local_path.exists():
+                shutil.copy2(str(source_mp4), str(local_path))
+            source_storage_url = f"http://127.0.0.1:8000/storage/source_{job_id}.mp4"
+            logger.info(f"Source sauvegardee localement: {source_storage_url}", extra=log_extra)
 
     # Vérification taille max
     if duration > settings.VIDEO_MAX_SECONDS:

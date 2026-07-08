@@ -59,7 +59,7 @@ async def get_job_status(job_id: str, user=Depends(get_current_user_optional)):
         raise HTTPException(400, "job_id invalide")
     async with get_conn() as conn:
         row = await conn.fetchrow(
-            "SELECT id, user_id, status, error_msg, storage_url, storage_key, thumbnail_url, summary, summaries, source_lang, target_lang, duration_s, video_type, source_url, video_width, video_height, source_storage_url, source_sub_url, original_filename, download_only, mode, title, download_count, retry_count, job_metrics, seo_slug, seo_metadata, created_at, updated_at, archived_at FROM jobs WHERE id=$1",
+            "SELECT id, user_id, status, error_msg, storage_url, storage_key, thumbnail_url, summary, summaries, step_data, source_lang, target_lang, duration_s, video_type, source_url, video_width, video_height, source_storage_url, source_sub_url, original_filename, download_only, mode, title, download_count, retry_count, job_metrics, seo_slug, seo_metadata, created_at, updated_at, archived_at FROM jobs WHERE id=$1",
             jid,
         )
     if not row:
@@ -67,7 +67,8 @@ async def get_job_status(job_id: str, user=Depends(get_current_user_optional)):
     can_download = row["status"] == "done" and bool(row["storage_url"])
     storage_url = row["storage_url"]
     if storage_url:
-        storage_url = f"/jobs/{job_id}/stream"
+        filename = storage_url.rsplit("/", 1)[-1]
+        storage_url = f"/storage/{filename}"
     estimated_total_seconds = None
     estimated_burn_seconds = None
     duration_s = row["duration_s"]
@@ -180,6 +181,25 @@ async def get_job_status(job_id: str, user=Depends(get_current_user_optional)):
         except Exception:
             pass
 
+    # Convertir les URLs file:// en /storage/ pour le frontend
+    raw_source_storage_url = row["source_storage_url"]
+    source_storage_url = raw_source_storage_url
+    if source_storage_url and source_storage_url.startswith("file://"):
+        filename = source_storage_url.rsplit("/", 1)[-1]
+        source_storage_url = f"/storage/{filename}"
+
+    # ── Extraire burned_languages de step_data ──────────────────────────
+    burned_languages = None
+    raw_step_data = row.get("step_data")
+    if isinstance(raw_step_data, dict):
+        burned_languages = raw_step_data.get("burned_languages")
+    elif isinstance(raw_step_data, str):
+        try:
+            import json as _json
+            burned_languages = _json.loads(raw_step_data).get("burned_languages")
+        except Exception:
+            pass
+
     return JobStatusResponse(
         vtt_url=vtt_url,
         vtt_source_url=vtt_source_url,
@@ -208,7 +228,7 @@ async def get_job_status(job_id: str, user=Depends(get_current_user_optional)):
         source_url=row["source_url"],
         video_width=row.get("video_width"),
         video_height=row.get("video_height"),
-        source_storage_url=row["source_storage_url"],
+        source_storage_url=source_storage_url,
         source_sub_url=row.get("source_sub_url") or None,
         original_filename=row["original_filename"],
         download_only=row["download_only"],
@@ -218,6 +238,7 @@ async def get_job_status(job_id: str, user=Depends(get_current_user_optional)):
         download_count=row["download_count"],
         retry_count=row["retry_count"],
         job_metrics=parsed_job_metrics,
+        burned_languages=burned_languages,
         created_at=created_at,
         updated_at=updated_at,
         archived_at=archived_at,

@@ -135,7 +135,7 @@ class Settings:
     WATERMARK_OPACITY: float = 1.0
     WATERMARK_SPORADIC_ENABLED: bool = True
     WATERMARK_SPORADIC_INTERVAL: float = 8
-    WATERMARK_SPORADIC_DURATION: float = 8
+    WATERMARK_SPORADIC_DURATION: float = 3
     WATERMARK_SPORADIC_OPACITY: float = 0.6
 
     # ── Quotas ───────────────────────────────────────────────────────

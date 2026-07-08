@@ -86,6 +86,7 @@ class JobStatusResponse(BaseModel):
     job_metrics: Optional[dict] = None
     seo_slug: Optional[str] = None
     seo_metadata: Optional[dict] = None
+    burned_languages: Optional[dict] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     archived_at: Optional[str] = None

@@ -71,10 +71,10 @@ class TestSporadicTimecodes:
             assert isinstance(end, float)
             assert start < end
 
-    def test_starts_after_5_seconds(self):
+    def test_starts_at_zero_for_thumbnail(self):
         timecodes = _compute_sporadic_timecodes(120.0)
         first_start = timecodes[0][0]
-        assert first_start >= 5.0, "First sporadic should start after 5s"
+        assert first_start == 0.0, "First watermark at t=0 for thumbnails"
 
     def test_respects_duration(self):
         timecodes = _compute_sporadic_timecodes(30.0, interval=15, text_duration=4)

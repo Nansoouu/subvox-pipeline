@@ -84,19 +84,7 @@ async def proxy_by_source(source_url: str, request: Request):
             params={"source_url": source_url},
             headers=headers,
         )
-    return r.json() if r.text else {}, r.status_code
-
-
-@router.get("/by-source/status")
-async def proxy_by_source_status(source_url: str, request: Request):
-    auth = request.headers.get("authorization", "")
-    headers = {"Content-Type": "application/json"}
-    if auth:
-        headers["Authorization"] = auth
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.get(
-            f"{ECONOMY_URL}/jobs/by-source/status",
-            params={"source_url": source_url},
-            headers=headers,
-        )
-    return r.json() if r.text else {}, r.status_code
+    try:
+        return r.json(), r.status_code
+    except Exception:
+        return {}, r.status_code

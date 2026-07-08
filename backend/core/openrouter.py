@@ -189,6 +189,9 @@ async def call_openrouter(
     elif is_deepseek_model:
         api_url = DEEPSEEK_URL
         api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        # Skip placeholder keys (redacted by config system)
+        if api_key and (api_key.startswith("«") or len(api_key) < 10):
+            api_key = None
         if not api_key:
             # Fallback: try community pool
             try:
@@ -234,6 +237,9 @@ async def call_openrouter(
         # Fallback : DeepSeek
         api_url = DEEPSEEK_URL
         api_key = getattr(settings, "DEEPSEEK_API_KEY", None)
+        # Skip placeholder keys (redacted by config system)
+        if api_key and (api_key.startswith("«") or len(api_key) < 10):
+            api_key = None
         if not api_key:
             import httpx as _hx2
             try:

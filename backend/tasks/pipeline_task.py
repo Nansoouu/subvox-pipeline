@@ -7,6 +7,9 @@ pour éviter de re-exécuter ce qui est déjà fait.
 """
 
 import asyncio
+import json
+import os
+import shutil
 import uuid
 from pathlib import Path
 from core.celery_app import celery_app
@@ -472,6 +475,14 @@ def burn_job_background(
                 downloaded = False
                 for label, url in download_urls:
                     try:
+                        # Handle file:// URLs locally instead of HTTP
+                        if url.startswith("file://"):
+                            local_file = url.replace("file://", "")
+                            if os.path.exists(local_file):
+                                shutil.copy2(local_file, src_path)
+                                logger.info(f"Fichier source copié depuis {local_file}")
+                                downloaded = True
+                                break
                         async with httpx.AsyncClient(timeout=300.0) as client:
                             resp = await client.get(url)
                             if resp.status_code == 200:
@@ -500,13 +511,18 @@ def burn_job_background(
                 raise RuntimeError("source.mp4 introuvable pour le burn")
             
             ass_path = ass_data.get("processed_files", {}).get("ass_path", "") if ass_data else ""
+            # Toujours définir _tmp_burn pour l'utiliser plus tard (burn source)
+            from core.pipeline.steps import _get_tmp as _get_tmp_path2
+            _tmp_burn = _get_tmp_path2(job_id)
             if not ass_path:
-                from core.pipeline.steps import _get_tmp as _get_tmp_path2
-                _tmp_burn = _get_tmp_path2(job_id)
                 # Fallback GÉNÉRIQUE : chercher tous les .ass dans le dossier tmp
                 import glob as _glob
                 ass_files = _glob.glob(str(_tmp_burn / "*.ass"))
-                if ass_files:
+                # Prioriser subtitles.ass (traduit) sur source_subtitles.ass (original)
+                preferred = [f for f in ass_files if "source_" not in Path(f).name]
+                if preferred:
+                    ass_path = preferred[0]
+                elif ass_files:
                     ass_path = ass_files[0]
                     _logger.info(
                         "ASS trouvé par fallback glob",
@@ -594,18 +610,15 @@ def burn_job_background(
                 },
             )
             
-            # ── 3. Executer step_burn ────────────────────────────────────
+            # ── 3. Executer step_burn pour la langue traduite ──────────────
             await save_burn_status(job_id, "burning", 10)
             
             from core.pipeline.steps import step_burn
             
-            # Callback de progression pour le burn
             def _on_burn_progress(pct: int):
-                # On ne peut pas await depuis un callback synchrone
-                # On utilise une approche simple : maj périodique
                 pass
             
-            _logger.info("Démarrage du burn FFmpeg...", extra={"job_id": job_id[:8]})
+            _logger.info("Burn FFmpeg (langue traduite)...", extra={"job_id": job_id[:8]})
             
             burn_result = await step_burn(job_id, on_progress=None)
             
@@ -614,9 +627,9 @@ def burn_job_background(
                     f"Etape burn échouée: {burn_result.error if burn_result else 'unknown'}"
                 )
             
-            await save_burn_status(job_id, "burning", 50)
+            await save_burn_status(job_id, "burning", 40)
             
-            # Sauvegarder le chemin du burned mp4
+            # Sauvegarder et uploader la vidéo traduite
             burned_path = ""
             if hasattr(burn_result, "files") and burn_result.files:
                 burned_path = burn_result.files.get("burned_mp4", "")
@@ -624,7 +637,60 @@ def burn_job_background(
                 await save_pipeline_file(job_id, "burning", "burned_mp4", burned_path)
             
             await mark_step_completed(job_id, "burning")
-            _logger.info("Burn terminé", extra={"job_id": job_id[:8]})
+            _logger.info("Burn traduit terminé", extra={"job_id": job_id[:8]})
+            
+            # ── 3b. Upload vidéo traduite ─────────────────────────────────
+            from core.pipeline.steps import step_upload
+            _logger.info("Upload vidéo traduite...", extra={"job_id": job_id[:8]})
+            upload_result = await step_upload(job_id)
+            
+            if not upload_result or not upload_result.success:
+                raise RuntimeError(
+                    f"Upload vidéo traduite échoué: {upload_result.error if upload_result else 'unknown'}"
+                )
+            
+            translated_storage_key = upload_result.data.get("storage_url", "")
+            _logger.info(
+                "Upload traduit terminé",
+                extra={"job_id": job_id[:8], "url": translated_storage_key[:80] if translated_storage_key else "empty"},
+            )
+            
+            # ── 3c. Burn + upload langue SOURCE (sous-titres originaux) ──
+            _logger.info("Burn FFmpeg (langue source)...", extra={"job_id": job_id[:8]})
+            source_ass = _tmp_burn / "source_subtitles.ass"
+            if source_ass.exists():
+                # Burn avec le ASS source
+                source_burn_result = await step_burn(job_id, on_progress=None, ass_path_override=str(source_ass))
+                
+                if source_burn_result and source_burn_result.success:
+                    # Uploader le résultat source
+                    source_burned_path = ""
+                    if hasattr(source_burn_result, "files") and source_burn_result.files:
+                        source_burned_path = source_burn_result.files.get("burned_mp4", "")
+                    
+                    if source_burned_path:
+                        await save_pipeline_file(job_id, "burning", "source_burned_mp4", source_burned_path)
+                    
+                    # Upload avec préfixe source_
+                    try:
+                        source_upload_result = await step_upload(job_id, prefix="source_")
+                        source_storage_key = source_upload_result.data.get("storage_url", "") if source_upload_result else ""
+                        _logger.info(
+                            "Upload source terminé",
+                            extra={"job_id": job_id[:8], "url": source_storage_key[:80] if source_storage_key else "empty"},
+                        )
+                    except Exception as src_up_exc:
+                        _logger.warning(
+                            "Upload source ignoré",
+                            extra={"job_id": job_id[:8], "error": str(src_up_exc)[:200]},
+                        )
+                        source_storage_key = ""
+                else:
+                    _logger.warning("Burn source ignoré (échec)", extra={"job_id": job_id[:8]})
+                    source_storage_key = ""
+            else:
+                _logger.info("source_subtitles.ass introuvable, skip burn source", extra={"job_id": job_id[:8]})
+                source_storage_key = ""
             
             # ── 4. Watermark (optionnel) ─────────────────────────────────
             if watermark:
@@ -667,22 +733,28 @@ def burn_job_background(
             
             # ── 6. Mettre à jour le job en DB ────────────────────────────
             async with direct_connect() as conn:
+                # Construire l'objet burned_languages pour stocker les 2 URLs
+                burned_langs = json.dumps({
+                    "fr": translated_storage_key,
+                    "en": source_storage_key or "",
+                })
                 await conn.execute(
                     "UPDATE jobs SET "
-                    "storage_url=$2, updated_at=now() "
+                    "storage_url=$2, step_data=step_data::jsonb || $3::jsonb, updated_at=now() "
                     "WHERE id=$1",
                     _uuid.UUID(job_id),
-                    storage_key,
+                    translated_storage_key,
+                    json.dumps({"burned_languages": {"fr": translated_storage_key, "en": source_storage_key or ""}}),
                 )
             
-            await save_burn_status(job_id, "ready", 100, storage_key)
+            await save_burn_status(job_id, "ready", 100, translated_storage_key)
             
             _logger.info(
                 "🔥 Burn asynchrone terminé avec succès",
-                extra={"job_id": job_id[:8], "storage_url": storage_key[:80]},
+                extra={"job_id": job_id[:8], "storage_url": translated_storage_key[:80]},
             )
             
-            return {"status": "ready", "storage_url": storage_key}
+            return {"status": "ready", "storage_url": translated_storage_key}
         
         result = asyncio.run(_run_burn())
         return result

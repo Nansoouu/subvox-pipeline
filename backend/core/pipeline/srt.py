@@ -239,7 +239,7 @@ def _srt_to_ass(
             )
             text_color = "FFFFFF"  # blanc
             ass_text = (
-                f"{{\\bord4\\shad0"
+                f"{{\\\bord6\\shad0"
                 f"\\c&H{text_color}&"
                 f"\\3c&H{bg_color}&"
                 f"\\4c&H{bg_color}&"

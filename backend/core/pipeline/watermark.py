@@ -79,7 +79,9 @@ def _compute_sporadic_timecodes(
     import random as _random
 
     timecodes: list[tuple[float, float]] = []
-    cursor = _random.uniform(5, 15)  # premier decalage aleatoire
+    # Toujours apparaitre au debut pour les vignettes
+    timecodes.append((0.0, float(min(text_duration, duration_s * 0.4))))
+    cursor = _random.uniform(3, 8)  # premier decalage aleatoire
     while cursor < duration_s:
         end = min(cursor + text_duration, duration_s)
         timecodes.append((cursor, end))
@@ -114,12 +116,13 @@ def _build_sporadic_drawtext_filters(
     if fontsize is None:
         fontsize = max(18, min(32, int(min(vid_w, vid_h) * 0.028)))
 
-    # Positions au centre (evitent la zone sous-titres en bas)
-    positions = [
-        ("x=(W-text_w)/2", "y=H*0.05"),   # haut centre
-        ("x=(W-text_w)/2", "y=H*0.35"),   # milieu haut
-        ("x=(W-text_w)/2", "y=H*0.55"),   # milieu bas
-        ("x=(W-text_w)/2", "y=H*0.80"),   # bas (mais pas sur les sous-titres)
+    # Positions fixes (pas de glissement) — chaque occurrence à un endroit différent
+    x_positions = ["W*0.05", "W*0.30", "W*0.55", "W*0.05"]
+    y_positions = [
+        "H*0.15",   # haut
+        "H*0.40",   # milieu
+        "H*0.65",   # bas
+        "H*0.15",   # haut (répété)
     ]
 
     fontcolor = f"white@{opacity}"
@@ -134,7 +137,8 @@ def _build_sporadic_drawtext_filters(
 
     for i, (start, end) in enumerate(timecodes):
         next_label = f"s{i}"
-        pos_x, pos_y = positions[i % len(positions)]
+        pos_x = x_positions[i % len(x_positions)]
+        pos_y = y_positions[i % len(y_positions)]
         enable_str = f"between(t,{start:.1f},{end:.1f})"
         filter_str = (
             f"[{current_label}]drawtext="
@@ -142,11 +146,11 @@ def _build_sporadic_drawtext_filters(
             f":fontsize={fontsize}"
             f":fontcolor={fontcolor}"
             f":box=1:boxcolor={boxcolor}:boxborderw=8"
-            f":{pos_x}:{pos_y}"
+            f":x={pos_x}:y={pos_y}"
             f":enable='{enable_str}'"
             f"[{next_label}]"
         )
         filters.append(filter_str)
         current_label = next_label
 
-    return ";\n".join(filters), current_label
+    return ";".join(filters), current_label

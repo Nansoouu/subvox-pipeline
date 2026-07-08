@@ -54,7 +54,7 @@ def _burn_ass_with_progress(
     _get_video_frames(video)
     wm_exists = wm_path and wm_path.exists()
 
-    if wm_exists and settings.WATERMARK_SPORADIC_ENABLED:
+    if settings.WATERMARK_SPORADIC_ENABLED and settings.WATERMARK_TEXT:
         duration_s = _get_video_duration(video) or 60
 
         timecodes = _compute_sporadic_timecodes(
@@ -69,10 +69,9 @@ def _burn_ass_with_progress(
             opacity=settings.WATERMARK_SPORADIC_OPACITY,
         )
 
-        # Chain: ASS → subbed (renamed base for drawtext) → sporadic drawtext → final
-        # PAS de watermark PNG fixe superpose
+        # Chain: ASS → drawtext overlay sur la même base
         filter_complex = (
-            f"[0:v]ass={ass_path},format=yuv420p[base];"
+            f"[0:v]ass={ass_path}[base];"
             f"{drawtext_filters}"
         )
 
@@ -163,7 +162,7 @@ def _burn_ass(
     vid_w, vid_h = _get_video_dims(video)
     wm_exists = wm_path and wm_path.exists()
 
-    if wm_exists and settings.WATERMARK_SPORADIC_ENABLED:
+    if settings.WATERMARK_SPORADIC_ENABLED and settings.WATERMARK_TEXT:
         duration_s = _get_video_duration(video) or 60
 
         timecodes = _compute_sporadic_timecodes(
@@ -178,10 +177,9 @@ def _burn_ass(
             opacity=settings.WATERMARK_SPORADIC_OPACITY,
         )
 
-        # Chain: ASS → subbed (renamed base for drawtext) → sporadic drawtext → final
-        # PAS de watermark PNG fixe superpose
+        # Chain: ASS → drawtext overlay sur la même base
         filter_complex = (
-            f"[0:v]ass={ass_path},format=yuv420p[base];"
+            f"[0:v]ass={ass_path}[base];"
             f"{drawtext_filters}"
         )
 
@@ -226,7 +224,7 @@ def _burn_ass(
         )
         return False
 
-    if wm_exists and settings.WATERMARK_SPORADIC_ENABLED:
+    if settings.WATERMARK_SPORADIC_ENABLED and settings.WATERMARK_TEXT:
         n_timecodes = len(timecodes) if drawtext_filters else 0
         logger.info(
             "Watermark texte sporadique ajoute",

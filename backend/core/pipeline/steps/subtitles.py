@@ -288,6 +288,14 @@ async def step_vtt_export(
             )
     except Exception as e:
         logger.error(f"Upload VTT traduit echoue: {e}", extra=log_extra)
+    if not vtt_url:
+        # Fallback local (dev mode, no Supabase)
+        storage_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "storage"
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        local_vtt = storage_dir / vtt_filename
+        local_vtt.write_text(vtt_content, encoding="utf-8")
+        vtt_url = f"/storage/{vtt_filename}"
+        logger.info(f"VTT sauvegarde localement: {vtt_url}", extra=log_extra)
 
     # VTT source
     vtt_source_url = ""
