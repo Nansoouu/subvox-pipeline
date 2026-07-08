@@ -263,33 +263,10 @@ class TelemetryWriter:
 
     async def update_cost_breakdown(self, category: str, cost_dict: dict) -> None:
         """
-        Ajoute un coût dans cost_breakdown JSONB.
-        Fusionne avec l'existant pour le category donné.
+        Obsolète — le split de paiement est fait on-chain par le Payment Processor contract.
+        La méthode est conservée pour compatibilité mais ne fait rien.
         """
-        from core.db import direct_connect as _direct
-
-        try:
-            async with _direct() as conn:
-                row = await conn.fetchrow(
-                    "SELECT cost_breakdown FROM jobs WHERE id=$1",
-                    uuid.UUID(self.job_id),
-                )
-                existing: dict = row["cost_breakdown"] or {} if row else {}
-                if isinstance(existing, str):
-                    existing = json.loads(existing)
-
-                existing[category] = cost_dict
-
-                await conn.execute(
-                    "UPDATE jobs SET cost_breakdown=$1::jsonb, updated_at=now() WHERE id=$2",
-                    json.dumps(existing),
-                    uuid.UUID(self.job_id),
-                )
-        except Exception as e:
-            logger.warning(
-                "TelemetryWriter update_cost_breakdown echoue",
-                extra={"error": str(e), "category": category, **self._log_extra},
-            )
+        pass
 
     async def append_processing_log(
         self,

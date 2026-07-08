@@ -18,11 +18,15 @@ ECONOMY_URL = "http://127.0.0.1:8001"
 @router.post("/estimate-duration")
 async def proxy_estimate_duration(request: Request):
     body = await request.body()
+    auth = request.headers.get("authorization", "")
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        headers["Authorization"] = auth
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(
             f"{ECONOMY_URL}/jobs/estimate-duration",
             content=body,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
     content = r.json() if r.text else {}
     return content
@@ -31,11 +35,15 @@ async def proxy_estimate_duration(request: Request):
 @router.post("/submit")
 async def proxy_submit(request: Request):
     body = await request.body()
+    auth = request.headers.get("authorization", "")
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        headers["Authorization"] = auth
     async with httpx.AsyncClient(timeout=120) as client:
         r = await client.post(
             f"{ECONOMY_URL}/jobs/submit",
             content=body,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
     content = r.json() if r.text else {}
     return content
@@ -44,11 +52,15 @@ async def proxy_submit(request: Request):
 @router.post("/{job_id}/fork")
 async def proxy_fork(job_id: str, request: Request):
     body = await request.body()
+    auth = request.headers.get("authorization", "")
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        headers["Authorization"] = auth
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(
             f"{ECONOMY_URL}/jobs/{job_id}/fork",
             content=body,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
     return r.json() if r.text else {}, r.status_code
 
@@ -62,21 +74,29 @@ async def proxy_stream(job_id: str):
 
 @router.get("/by-source")
 async def proxy_by_source(source_url: str, request: Request):
+    auth = request.headers.get("authorization", "")
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        headers["Authorization"] = auth
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(
             f"{ECONOMY_URL}/jobs/by-source",
             params={"source_url": source_url},
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
     return r.json() if r.text else {}, r.status_code
 
 
 @router.get("/by-source/status")
 async def proxy_by_source_status(source_url: str, request: Request):
+    auth = request.headers.get("authorization", "")
+    headers = {"Content-Type": "application/json"}
+    if auth:
+        headers["Authorization"] = auth
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(
             f"{ECONOMY_URL}/jobs/by-source/status",
             params={"source_url": source_url},
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
     return r.json() if r.text else {}, r.status_code

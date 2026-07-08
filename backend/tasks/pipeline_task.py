@@ -178,23 +178,18 @@ def process_video_task(
         # 🔑 Résolution de la clé Groq : appel à Economy via HTTP
         groq_key = ""
         try:
-            import json as _json
             import uuid as _uuid
             wallet = ""
-            # Récupérer le wallet depuis cost_breakdown via asyncpg direct
+            # Récupérer le wallet depuis la colonne user_id de jobs
             from core.db import direct_connect as _dc
             try:
                 async def _get_wallet():
                     async with _dc() as _c:
                         row = await _c.fetchrow(
-                            "SELECT cost_breakdown FROM jobs WHERE id=$1",
+                            "SELECT user_id FROM jobs WHERE id=$1",
                             _uuid.UUID(job_id),
                         )
-                        if row and row["cost_breakdown"]:
-                            cb = row["cost_breakdown"]
-                            if isinstance(cb, str):
-                                cb = _json.loads(cb)
-                            return (cb or {}).get("wallet", "")
+                        return (row or {}).get("user_id", "")
                 import asyncio as _aio
                 wallet = _aio.run(_get_wallet())
             except Exception:

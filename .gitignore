@@ -16,3 +16,5 @@ run/logs/
 .hermes/
 .hermes.md
 AGENTS.md
+subvox-pipeline/
+config.yaml
