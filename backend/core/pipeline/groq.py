@@ -258,7 +258,7 @@ def _transcribe_via_groq(
                     data={
                         "model": "whisper-large-v3-turbo",
                         "response_format": "verbose_json",
-                        "timestamp_granularities[]": ["segment", "word"],
+                        "timestamp_granularities[]": "segment",
                     },
                 )
             if resp.status_code == 429:
