@@ -45,8 +45,10 @@ async def proxy_submit(request: Request):
             content=body,
             headers=headers,
         )
-    content = r.json() if r.text else {}
-    return content
+    try:
+        return r.json(), r.status_code
+    except Exception:
+        return {"error": "economy_error", "detail": r.text[:500]}, r.status_code
 
 
 @router.post("/{job_id}/fork")
