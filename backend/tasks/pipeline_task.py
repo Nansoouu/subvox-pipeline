@@ -289,6 +289,7 @@ def process_video_task(
                 target_lang,
                 user_id,
                 groq_api_key=groq_key,
+                download_only=download_only,
                 _source_job_id=_source_job_id or "",
                 soft_subs=soft_subs,
             )
