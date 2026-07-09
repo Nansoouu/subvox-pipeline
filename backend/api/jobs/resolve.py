@@ -138,3 +138,73 @@ async def list_all_slugs() -> list[dict]:
             exc,
         )
         return []
+
+
+@router.get("/{job_id:str}/langs")
+async def get_job_slugs(job_id: str) -> dict:
+    """
+    Retourne les slugs SEO (toutes langues) pour un job specifique.
+
+    Utilise par le middleware Next.js pour rediriger les anciennes URLs
+    /watch/{uuid}?lang=de vers /{locale}/watch/{slug}.
+    """
+    if not job_id or not job_id.strip():
+        raise HTTPException(status_code=400, detail="job_id is required")
+
+    try:
+        from core.db import direct_connect as _direct
+        from uuid import UUID
+
+        # Valider l'UUID
+        try:
+            job_uuid = UUID(job_id)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Invalid UUID")
+
+        async with _direct() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT seo_metadata, target_lang, source_lang
+                FROM jobs
+                WHERE id = $1
+                """,
+                job_uuid,
+            )
+
+            if not row:
+                raise HTTPException(status_code=404, detail="Job not found")
+
+            seo = row["seo_metadata"]
+
+            if isinstance(seo, str):
+                import json as _json
+                try:
+                    seo = _json.loads(seo)
+                except Exception:
+                    seo = {}
+
+            if not isinstance(seo, dict):
+                seo = {}
+
+            slugs: dict[str, str] = {}
+            for lang_code, entry in seo.items():
+                if isinstance(entry, dict) and entry.get("slug"):
+                    slugs[lang_code] = entry["slug"]
+
+            default_lang = row["target_lang"] or row["source_lang"] or "fr"
+
+            return {
+                "job_id": job_id,
+                "slugs": slugs,
+                "default_lang": default_lang,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(
+            "Recuperation slugs echouee: %s",
+            exc,
+            extra={"job_id": job_id[:8]},
+        )
+        raise HTTPException(status_code=500, detail="Internal server error")
