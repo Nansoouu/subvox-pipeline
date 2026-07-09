@@ -36,7 +36,7 @@ async def resolve_slug(slug: str) -> dict:
             # Parcourir seo_metadata JSONB pour trouver le slug
             row = await conn.fetchrow(
                 """
-                SELECT id, lang, seo_metadata->>lang AS entry_json
+                SELECT j.id, langs.lang
                 FROM (
                     SELECT id, jsonb_object_keys(seo_metadata) AS lang
                     FROM jobs
