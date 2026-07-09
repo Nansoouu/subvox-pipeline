@@ -276,7 +276,7 @@ def _transcribe_via_groq(
             logger.warning(f"Groq timeout ({timeout_s}s) pour {filename}")
             return "timeout"
         except Exception as e:
-            logger.error("Groq API exception", extra={"error": str(e)})
+            logger.error(f"Groq API exception: {e}")
             return None
 
     def _call_groq_with_retry(

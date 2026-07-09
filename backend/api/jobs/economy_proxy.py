@@ -45,10 +45,12 @@ async def proxy_submit(request: Request):
             content=body,
             headers=headers,
         )
+    from fastapi.responses import JSONResponse
     try:
-        return r.json(), r.status_code
+        data = r.json()
     except Exception:
-        return {"error": "economy_error", "detail": r.text[:500]}, r.status_code
+        data = {"error": "economy_error", "detail": r.text[:500]}
+    return JSONResponse(content=data, status_code=r.status_code)
 
 
 @router.post("/{job_id}/fork")

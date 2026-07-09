@@ -221,6 +221,10 @@ def process_video_task(
             logger.warning(f"Groq key resolution failed: {e}")
         if not groq_key:
             groq_key = settings.GROQ_API_KEY or ""
+        # Vérifier que la clé n'est pas un placeholder redacted
+        if groq_key and ("«redacted" in groq_key or "redacted:" in groq_key or groq_key == "«redacted:gsk_…»"):
+            groq_key = ""
+            logger.warning("Groq key from config is a placeholder, ignoring")
         if not groq_key:
             # Fallback: try to use a community pool key
             try:
