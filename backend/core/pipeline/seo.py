@@ -26,11 +26,11 @@ from core.openrouter import call_openrouter, PRIMARY_MODEL
 logger = get_logger(__name__)
 
 # Constantes SEO
-TITLE_MIN_CHARS = 40
-TITLE_MAX_CHARS = 60
-DESC_MIN_CHARS = 120
-DESC_MAX_CHARS = 155
-H1_MAX_CHARS = 70
+TITLE_MIN_CHARS = 50
+TITLE_MAX_CHARS = 120
+DESC_MIN_CHARS = 350
+DESC_MAX_CHARS = 600
+H1_MAX_CHARS = 100
 KEYWORDS_MIN = 5
 KEYWORDS_MAX = 10
 
@@ -249,19 +249,19 @@ async def _find_similar_titles(
 
 SEO_ALL_LANGS_SYSTEM = (
     "Tu es un expert SEO senior specialise dans l'optimisation de contenus video "
-    "multilingues. Tu generes des metadonnees SEO en UN SEUL appel pour 21 langues "
+    "multilingues pour Google. Tu generes des metadonnees SEO en UN SEUL appel pour 21 langues "
     "differentes.\n\n"
     "Regles strictes :\n"
-    "1. **Chaque titre DOIT etre une question** se terminant par `?` — c'est la regle la plus importante.\n"
-    "2. Chaque titre et description dans la langue native du public cible.\n"
-    "3. Titre : 40-55 caracteres. Mot-cle principal a gauche.\n"
-    "4. Description : 120-155 caracteres. Structure : Probleme -> Solution -> CTA.\n"
-    "5. H1 : Variante du titre (50-70 chars).\n"
-    "6. Keywords : 5-10 mots-cles longue traine dans la langue cible.\n"
-    "7. Pas de tirets dans les titres (`--`, `—`, `-`) — utiliser `:` avec espaces si necessaire.\n"
-    "8. Amorces variees : Comment, Pourquoi, Quel, Que, Combien, Est-ce que, Arrêtez de..., Faut-il...\n"
+    "1. Le titre et la description doivent decrire le contenu REEL de la video (pas d'invention).\n"
+    "2. Titre : 50-120 caracteres. Pas d'emoji, pas de point d'interrogation force. Accrocheur et descriptif.\n"
+    "3. Description : 350-600 caracteres. Resume complet et informatif de la video. Structuree en 2-3 phrases.\n"
+    "4. H1 : Variante du titre (50-100 chars), sans emoji.\n"
+    "5. Keywords : 5-10 mots-cles longue traine dans la langue cible, vraiment lies au contenu.\n"
+    "6. Pas d'emoji, pas de tirets inutiles, pas de ponctuation excessive.\n"
+    "7. Chaque texte dans la langue native du public cible (traduction naturelle, pas du mot-a-mot).\n"
+    "8. Si la duree < 60s : titres adaptes aux Shorts/Reels (30-60 chars, punchy).\n"
     "9. Les titres doivent etre UNIQUES et adaptes a chaque marche linguistique.\n"
-    "10. Si la duree < 60s : titres adaptes aux Shorts/Reels (30-45 chars, punchy).\n\n"
+    "10. Google-friendly : la description doit etre un mini-article informatif qui donne envie de cliquer.\n\n"
     "Format de sortie : UNIQUEMENT un JSON valide, sans commentaire autour.\n"
     "Le JSON doit avoir une clef par code langue (fr, en, es, de, ...).\n"
     "Chaque valeur est un objet avec title, description, h1, keywords."
@@ -278,6 +278,9 @@ SEO_ALL_LANGS_USER = """Genere des metadonnees SEO optimisees pour les 21 langue
 === DUREE (secondes) ===
 {duration_s}
 
+=== TRANSCRIPTION COMPLETE (SRT) ===
+{transcript}
+
 === RESUME VIDEO ===
 {summary}
 
@@ -289,20 +292,17 @@ SEO_ALL_LANGS_USER = """Genere des metadonnees SEO optimisees pour les 21 langue
 
 ---
 Consignes (respecter l'ordre de priorite) :
-1. Chaque titre DOIT etre une question finissant par `?`
-2. Le titre et la description doivent etre dans la langue native du public cible
-3. Les titres doivent etre UNIQUES entre eux
-4. Si la duree < 60s : titres adaptes aux Shorts/Reels
-5. Si categorie "tutorial" : titre commencant par "Comment ", "Tutoriel " ou "Apprendre a "
-6. Mot-cle principal dans les 50 premiers caracteres de chaque titre
-7. Description : 120-155 caracteres
-8. Interdire les tirets (`--`, `—`, `-`) dans les titres -- utiliser ` : ` si necessaire
-9. Adapte les keywords a chaque marche linguistique (expressions locales)
+1. Le titre et la description doivent refleter le contenu REEL de la video visible dans la transcription ci-dessus
+2. Titre : 50-120 caracteres, PAS d'emoji, pas de ? force, accrocheur
+3. Description : 350-600 caracteres, informative et Google-friendly, resume le contenu reel
+4. Pas d'emoji dans le titre ni la description
+5. Si la duree < 60s : titres adaptes aux Shorts/Reels
+6. Traduction naturelle dans chaque langue, pas de mot-a-mot
 
 Reponds UNIQUEMENT avec ce JSON (21 langues) :
 {{
-  "fr": {{ "title": "... ?", "description": "...", "h1": "...", "keywords": [...] }},
-  "en": {{ "title": "... ?", "description": "...", "h1": "...", "keywords": [...] }},
+  "fr": {{ "title": "...", "description": "...", "h1": "...", "keywords": [...] }},
+  "en": {{ "title": "...", "description": "...", "h1": "...", "keywords": [...] }},
   ...
 }}"""
 
@@ -365,10 +365,17 @@ async def generate_seo_all_langs(
         langs_list_lines.append(f"  - {lang} ({name})")
     langs_list_str = "\n".join(langs_list_lines)
 
+    # Extraire le transcript (SRT) depuis analysis_result
+    transcript = ""
+    if analysis_result:
+        transcript = analysis_result.get("text", "") or analysis_result.get("raw_srt", "") or ""
+    transcript_str = transcript[:1500] if transcript else "non disponible"
+
     user_prompt = SEO_ALL_LANGS_USER.format(
         raw_title=raw_title[:300],
         category=category or "non classifiee",
         duration_s=int(duration_s),
+        transcript=transcript_str,
         summary=summary[:500] if summary else "non disponible",
         content_insights=insights_str or "non disponible",
         langs_list=langs_list_str,
@@ -383,7 +390,7 @@ async def generate_seo_all_langs(
             ],
             model=PRIMARY_MODEL,
             temperature=0.3,
-            max_tokens=4096,
+            max_tokens=8192,
             user_id=f"seo_all_{job_id}",
             cache_key=f"seo_all|{job_id[:16]}",
         )
