@@ -746,11 +746,13 @@ def burn_job_background(
             )
             
             # ── 6. Mettre à jour le job en DB ────────────────────────────
+            target_lang_db = row.get("target_lang", "fr") or "fr"
+            source_lang_db = row.get("source_lang", "en") or "en"
             async with direct_connect() as conn:
                 # Construire l'objet burned_languages pour stocker les 2 URLs
                 burned_langs = json.dumps({
-                    "fr": translated_storage_key,
-                    "en": source_storage_key or "",
+                    target_lang_db: translated_storage_key,
+                    source_lang_db: source_storage_key or "",
                 })
                 await conn.execute(
                     "UPDATE jobs SET "
