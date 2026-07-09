@@ -31,7 +31,6 @@ async def resolve_slug(slug: str) -> dict:
 
     try:
         from core.db import direct_connect as _direct
-        from uuid import UUID
 
         async with _direct() as conn:
             # Parcourir seo_metadata JSONB pour trouver le slug
@@ -90,7 +89,6 @@ async def list_all_slugs() -> list[dict]:
     """
     try:
         from core.db import direct_connect as _direct
-        from uuid import UUID
 
         async with _direct() as conn:
             rows = await conn.fetch(
