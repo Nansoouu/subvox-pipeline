@@ -47,10 +47,10 @@ from api.platforms import router as platforms_router
 
 app.include_router(jobs_public_router, prefix="/jobs")
 app.include_router(check_url_router, prefix="/jobs")
+app.include_router(jobs_resolve_router, prefix="/jobs")
 app.include_router(jobs_status_router, prefix="/jobs")
 app.include_router(subtitles_router, prefix="/jobs")
 app.include_router(economy_proxy_router, prefix="/jobs")
-app.include_router(jobs_resolve_router, prefix="/jobs")
 app.include_router(stats_router, prefix="/stats")
 app.include_router(platforms_router)
 
