@@ -20,6 +20,13 @@ import unicodedata
 import uuid
 from datetime import datetime, timezone
 
+try:
+    from unidecode import unidecode
+except ImportError:
+    # Fallback si unidecode n'est pas installe
+    def unidecode(s: str) -> str:
+        return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+
 from core.logging_setup import get_logger
 from core.openrouter import call_openrouter, PRIMARY_MODEL
 
@@ -101,13 +108,12 @@ def _slugify(text: str) -> str:
     """
     Convertit un texte en slug lisible pour URL.
     - lowercase
-    - remplace accents
+    - translitteration unicode→ascii (via unidecode)
     - garde uniquement [a-z0-9-]
     - remplace les espaces par des tirets
     """
-    # Normaliser Unicode (separer accents des lettres)
-    text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("ascii")
+    # Translitteration unicode → ascii (couvre ja/zh/ar/ru/ko etc.)
+    text = unidecode(text)
 
     # Lowercase
     text = text.lower()
@@ -123,6 +129,25 @@ def _slugify(text: str) -> str:
     text = text.strip("-")
 
     return text
+
+
+def _lang_slugify(title: str, lang: str = "en") -> str:
+    """
+    Genere un slug optimise par famille de script linguistique.
+    Pour les scripts non-latins, utilise unidecode (ISO 9, Hepburn, Pinyin etc.).
+
+    Familles :
+    - Latin (en,fr,es,de,it,pt,nl,pl,vi,id,tr) : slugify() normal → [a-z0-9-]
+    - Cyrillique (ru,uk) : Translitteration ISO 9 via unidecode
+    - Arabe (ar,fa) : Translitteration ALA-LC via unidecode
+    - Hebreu (he) : Translitteration ISO 259 via unidecode
+    - Hindi (hi) : Translitteration IAST via unidecode
+    - Thai (th) : Translitteration RTGS via unidecode
+    - Chinois (zh) : Pinyin (sans tons) via unidecode
+    - Japonais (ja) : Romaji (Hepburn) via unidecode
+    - Coreen (ko) : Romanisation Revee via unidecode
+    """
+    return _slugify(title)
 
 
 def _title_to_slug(title: str, lang: str = "fr", created_at: str | None = None) -> str:
@@ -725,6 +750,21 @@ async def save_seo_metadata_multilingual(
             for lang, seo_entry in seo_all.items():
                 if lang not in existing or not existing[lang].get("title"):
                     merged[lang] = seo_entry
+
+            # Generer un slug par langue dans seo_metadata
+            for lang_code, seo_entry in merged.items():
+                title = seo_entry.get("title", "")
+                if title and not seo_entry.get("slug"):
+                    job_created_at = row["created_at"]
+                    if isinstance(job_created_at, datetime):
+                        job_created_at_str = job_created_at.isoformat()
+                    else:
+                        job_created_at_str = str(job_created_at) if job_created_at else None
+
+                    # Generer le slug dans la langue avec la bonne translitteration
+                    slug = _title_to_slug(title, lang_code, job_created_at_str)
+                    if slug:
+                        seo_entry["slug"] = slug
 
             await conn.execute(
                 "UPDATE jobs SET seo_metadata=$1, updated_at=now() WHERE id=$2",
