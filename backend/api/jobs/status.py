@@ -294,3 +294,25 @@ async def get_job_metrics(job_id: str):
     if not row:
         raise HTTPException(404, "Job introuvable")
     return row["job_metrics"] or {}
+
+
+@router.get("/{job_id}/download")
+async def download_job_file(job_id: str):
+    """Redirige vers le fichier stocké localement (/storage/{filename})."""
+    try:
+        jid = uuid.UUID(job_id)
+    except ValueError:
+        raise HTTPException(400, "job_id invalide")
+    async with get_conn() as conn:
+        row = await conn.fetchrow(
+            "SELECT status, storage_url, original_filename FROM jobs WHERE id=$1",
+            jid,
+        )
+    if not row:
+        raise HTTPException(404, "Job introuvable")
+    if row["status"] != "done":
+        raise HTTPException(400, "Le job n'est pas encore terminé")
+    if not row["storage_url"]:
+        raise HTTPException(404, "Aucun fichier disponible pour ce job")
+    filename = row["storage_url"].rsplit("/", 1)[-1]
+    return RedirectResponse(url=f"/storage/{filename}", status_code=307)
