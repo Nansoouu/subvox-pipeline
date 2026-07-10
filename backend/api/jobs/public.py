@@ -96,6 +96,7 @@ async def get_public_jobs(
                 j.source_url,
                 j.target_lang,
                 j.status,
+                j.mode,
                 j.created_at,
                 j.updated_at,
                 COALESCE(j.duration_s, 0) AS video_duration_s,
@@ -132,6 +133,7 @@ async def get_public_jobs(
             "groq_time_s": 0,
             "cost_subvox": 0,  # on-chain, removed from DB
             "cost_split": {},  # on-chain, removed from DB
+            "mode": row["mode"],
             "is_owner": is_owner,
             "owner_short": (wallet_in_db[:6] + "..." if wallet_in_db else
                            str(row["user_id"])[:8] if row["user_id"] else None),
