@@ -5,21 +5,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     curl \
     build-essential \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install deno for yt-dlp YouTube extraction
+RUN curl -fsSL https://deno.land/install.sh | sh -s -- -y && \
+    cp /root/.deno/bin/deno /usr/local/bin/deno && \
+    chmod 755 /usr/local/bin/deno
+
+RUN addgroup --system --gid 1001 subvox && \
+    adduser --system --uid 1001 --gid 1001 subvox
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY --chown=subvox:subvox requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend/ ./backend/
-COPY backend/migrations/ ./migrations/
+COPY --chown=subvox:subvox backend/ ./backend/
+COPY --chown=subvox:subvox backend/migrations/ ./migrations/
 
 ENV PYTHONPATH=/app/backend
 
-RUN addgroup --system --gid 1001 subvox && \
-    adduser --system --uid 1001 --gid 1001 subvox && \
-    mkdir -p /tmp/subvox-processing /app/storage && \
+RUN mkdir -p /tmp/subvox-processing /app/storage && \
     chown -R subvox:subvox /tmp/subvox-processing /app/storage
 
 USER subvox
@@ -38,4 +45,4 @@ WORKDIR /app
 
 ENV C_FORCE_ROOT=no
 
-CMD ["celery", "-A", "core.celery_app", "worker", "--loglevel=info", "--concurrency=2", "-Q", "video_processing,video_analysis"]
+CMD ["celery", "-A", "core.celery_app", "worker", "--loglevel=info", "--concurrency=4", "-Q", "video_processing,video_analysis,short,medium,long,xlong,economy"]

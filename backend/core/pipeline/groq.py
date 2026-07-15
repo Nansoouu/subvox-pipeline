@@ -117,6 +117,46 @@ def _compute_timeout(audio_duration_s: float) -> float:
 # ─── Helpers de parsing ──────────────────────────────────────────────────────
 
 
+def _words_to_segments(words_data: list[dict], offset_s: float) -> list[dict]:
+    """Reconstruit des segments propres à partir des mots avec timestamps.
+    Coupe aux fins de phrase, pauses > 0.5s, ou 80 chars max."""
+    if not words_data:
+        return []
+    parsed = []
+    for w in words_data:
+        text = (w.get("word") or "").strip()
+        if not text:
+            continue
+        parsed.append({
+            "text": text,
+            "start": max(0, float(w.get("start", 0)) + offset_s),
+            "end": max(0.2, float(w.get("end", 0.2)) + offset_s),
+        })
+    if not parsed:
+        return []
+    segs = []
+    cur = [parsed[0]]
+    for w in parsed[1:]:
+        gap = w["start"] - cur[-1]["end"]
+        cur_text = " ".join(x["text"] for x in cur)
+        if gap > 0.5 or cur_text[-1:] in ".!?…" or len(cur_text) > 80:
+            segs.append({"start_s": cur[0]["start"], "end_s": cur[-1]["end"],
+                         "text": cur_text})
+            cur = [w]
+        else:
+            cur.append(w)
+    if cur:
+        cur_text = " ".join(x["text"] for x in cur)
+        segs.append({"start_s": cur[0]["start"], "end_s": cur[-1]["end"],
+                     "text": cur_text})
+    for i, s in enumerate(segs):
+        s["index"] = i + 1
+        s["confidence"] = s["no_speech_prob"] = 0.0
+        s["compression_ratio"] = 1.0
+        s["tokens"] = []; s["temperature"] = 0.0; s["language"] = ""
+    return segs
+
+
 def _whisper_segment_to_dict(seg: dict, offset_s: float = 0.0) -> dict:
     """
     Transforme un segment Whisper (verbose_json) en dict structuré propre.
@@ -142,10 +182,12 @@ def _build_segments_list(
     raw_segments: list[dict],
     language: str,
     offset_s: float = 0.0,
+    chunk_duration_s: float = 0.0,
 ) -> list[dict]:
     """
     Construit une liste de segments structurés propre à partir des segments Whisper bruts.
     Filtre les segments vides, ajoute l'index et la langue.
+    Si les timestamps sont tous à 0, distribue les segments sur la durée du chunk.
     """
     result = []
     first_word_start = None
@@ -153,13 +195,29 @@ def _build_segments_list(
         d = _whisper_segment_to_dict(seg, offset_s)
         if not d["text"]:
             continue
-        # Détecter le premier mot parlé via word-level timestamps
         words = seg.get("words", [])
         if words and first_word_start is None:
             first_word_start = float(words[0].get("start", 0)) + offset_s
         d["index"] = i
         d["language"] = language
         result.append(d)
+
+    # Si les segments sont tassés dans les premières secondes du chunk
+    # (Groq n'a pas retourné de timing fiable), distribuer uniformément
+    if result and chunk_duration_s > 0:
+        last_end = max(s["end_s"] for s in result)
+        span_ratio = (last_end - offset_s) / chunk_duration_s if chunk_duration_s > 0 else 0
+        if span_ratio < 0.05:  # moins de 5% du chunk utilisé
+            n_segs = len(result)
+            seg_dur = chunk_duration_s / n_segs
+            for idx, d in enumerate(result):
+                d["start_s"] = round(offset_s + idx * seg_dur, 3)
+                d["end_s"] = round(offset_s + (idx + 1) * seg_dur, 3)
+            logger.info(
+                f"Timestamps générés pour {n_segs} segments (chunk {chunk_duration_s:.0f}s)",
+                extra={"offset_s": round(offset_s, 1)},
+            )
+            return result
 
     # Décaler tous les segments du silence initial
     if first_word_start and first_word_start > 0.5:
@@ -170,6 +228,31 @@ def _build_segments_list(
         for d in result:
             d["start_s"] = round(max(0, d["start_s"] - first_word_start + 0.1), 3)
             d["end_s"] = round(max(0.2, d["end_s"] - first_word_start + 0.1), 3)
+
+    # Post-traitement : détecter les runs de segments avec start_s quasi-identique
+    # (Groq n'a pas retourné de timing fiable)
+    if result:
+        i = 0
+        total = len(result)
+        while i < len(result):
+            ts_base = result[i]["start_s"]
+            j = i + 1
+            while j < len(result) and abs(result[j]["start_s"] - ts_base) < 0.5:
+                j += 1
+            n_dup = j - i
+            if n_dup > 2:
+                next_ts = result[j]["start_s"] if j < len(result) else ts_base + (chunk_duration_s or 120)
+                span = max(0.1, next_ts - ts_base)
+                # Forcer une durée minimale par segment (2s pour lire un sous-titre)
+                min_span = n_dup * 2.0
+                if span < min_span:
+                    span = min_span
+                step = span / n_dup
+                for k in range(n_dup):
+                    result[i + k]["start_s"] = round(ts_base + k * step, 3)
+                    result[i + k]["end_s"] = round(ts_base + (k + 1) * step, 3)
+                logger.info(f"Post-timing: {n_dup}/{total} segs span={span:.0f}s avg={step:.1f}s")
+            i = j
 
     return result
 
@@ -431,7 +514,7 @@ def _transcribe_via_groq(
                 )
 
             # Structurer les segments avec l'offset du silence initial
-            segments = _build_segments_list(raw_segments, language, offset_s=-silence_offset)
+            segments = _build_segments_list(raw_segments, language, offset_s=-silence_offset, chunk_duration_s=float(estimated_duration_s))
             total_duration_s = max((s["end_s"] for s in segments), default=estimated_duration_s)
             _report_groq_usage(api_keys[used_key_idx], int(total_duration_s), economy_url)
 
@@ -574,7 +657,7 @@ def _transcribe_via_groq(
 
             language = data.get("language", language)
             raw_segs = data.get("segments") or []
-            chunk_segs = _build_segments_list(raw_segs, language, offset_s)
+            chunk_segs = _build_segments_list(raw_segs, language, offset_s, chunk_duration_s=float(_GROQ_CHUNK_DURATION))
             # Réindexer globalement
             for s in chunk_segs:
                 seg_counter += 1

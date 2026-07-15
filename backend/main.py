@@ -90,6 +90,22 @@ async def proxy_to_economy(request: Request, path: str = ""):
     return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
 
 
+# ── Solana RPC Proxy (évite les CORS navigateur) ──────────────
+import httpx as _httpx
+
+@app.post("/solana-rpc")
+async def proxy_solana_rpc(request: Request):
+    """Proxy les appels RPC Solana depuis le navigateur (évite CORS 403)."""
+    body = await request.body()
+    async with _httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(
+            "https://api.mainnet-beta.solana.com",
+            content=body,
+            headers={"Content-Type": "application/json"},
+        )
+    return Response(content=resp.content, status_code=resp.status_code)
+
+
 # ── Health check ──────────────────────────────────────────────
 @app.get("/health")
 async def health():

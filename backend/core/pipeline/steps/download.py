@@ -63,6 +63,12 @@ async def step_download(
                 f"Fichier cookies invalide ou vide: {cookies_file}",
                 extra=log_extra,
             )
+    else:
+        # Fallback: cookie partagé depuis le volume economy/cache
+        _default_cookies = "/app/.cache/youtube_cookies.txt"
+        if _is_valid_cookies_file(_default_cookies):
+            ydl_opts["cookiefile"] = _default_cookies
+            logger.info(f"Cookies depuis fallback: {_default_cookies}", extra=log_extra)
 
     try:
         import browser_cookie3
@@ -87,27 +93,112 @@ async def step_download(
     video_title = ""
     video_description = ""
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(source_url, download=True)
-        duration = float(info.get("duration") or 0)
-        source_lang = (info.get("language") or info.get("original_lang") or "").lower()[
-            :5
+    import json, subprocess, os
+
+    # Check if video already exists in storage from a previous job
+    existing_source = None
+    source_storage_url = None
+    try:
+        from core.db import direct_connect as _dc
+        import asyncio
+        async def _find_existing():
+            async with _dc() as conn:
+                row = await conn.fetchrow(
+                    "SELECT source_storage_url FROM jobs "
+                    "WHERE source_url=$1 AND status='done' "
+                    "AND source_storage_url IS NOT NULL "
+                    "ORDER BY created_at DESC LIMIT 1",
+                    source_url,
+                )
+                return row["source_storage_url"] if row else None
+        existing_source = asyncio.run(_find_existing())
+    except Exception:
+        pass
+
+    if existing_source:
+        # Copy existing file instead of downloading from YouTube
+        import shutil
+        existing_path = existing_source.replace("file://", "")
+        if os.path.exists(existing_path):
+            shutil.copy2(existing_path, source_mp4)
+            logger.info(
+                f"Vidéo réutilisée depuis storage: {existing_path}",
+                extra=log_extra,
+            )
+            source_storage_url = existing_source
+            # Get metadata from existing file
+            probe_cmd = ["ffprobe", "-v", "error", "-show_entries",
+                         "format=duration:format=size", "-of",
+                         "default=noprint_wrappers=1:nokey=1",
+                         str(source_mp4)]
+            probe = subprocess.run(probe_cmd, capture_output=True, timeout=30, text=True)
+            lines = probe.stdout.strip().split("\n")
+            duration = float(lines[0]) if lines else 0
+
+    if not existing_source:
+        cookies_arg = ydl_opts.get("cookiefile", "")
+        base_cmd = [
+            "yt-dlp",
+            "--remote-components", "ejs:github",
+            "--no-warnings",
+            "--retries", "3",
+            "--socket-timeout", "30",
+            "--sleep-requests", "1.0",
+            "--sleep-interval", "3",
+            "--max-sleep-interval", "10",
         ]
+        if cookies_arg:
+            base_cmd += ["--cookies", cookies_arg]
+
+        # 1. Get JSON metadata (no download)
+        r_info = subprocess.run(
+            base_cmd + ["--dump-json", source_url],
+            capture_output=True, timeout=30, text=True,
+        )
+        if r_info.returncode != 0:
+            r_info = subprocess.run(
+                [c for c in base_cmd if c not in ("--remote-components", "ejs:github")]
+                + ["--dump-json", source_url],
+                capture_output=True, timeout=30, text=True,
+            )
+        if r_info.returncode != 0:
+            raise RuntimeError(f"yt-dlp metadata failed: {r_info.stderr[:500]}")
+
+        info = {}
+        for line in r_info.stdout.strip().split("\n"):
+            line = line.strip()
+            if line and line.startswith("{"):
+                try:
+                    info = json.loads(line)
+                    break
+                except json.JSONDecodeError:
+                    continue
+        if not info.get("duration"):
+            raise RuntimeError(f"yt-dlp metadata empty: {r_info.stderr[:200]}")
+
+        # 2. Download the video
+        dl_cmd = base_cmd + ["-f", "best[height<=1080]", "-o", str(source_mp4), source_url]
+        r_dl = subprocess.run(dl_cmd, capture_output=True, timeout=7200, text=True)
+        if r_dl.returncode != 0 or not source_mp4.exists():
+            raise RuntimeError(f"yt-dlp download failed: {r_dl.stderr[:500] if r_dl.stderr else 'unknown'}")
+
+        duration = float(info.get("duration") or 0)
+        source_lang = (info.get("language") or info.get("original_lang") or "").lower()[:5]
         thumbnail_url = info.get("thumbnail")
         video_type = "short" if duration <= settings.VIDEO_SHORT_MAX_SECONDS else "long"
         video_title = html.unescape(info.get("title", "") or "")
         video_description = html.unescape(info.get("description", "") or "")
-        if video_title:
-            from core.db import direct_connect as _dc
-            try:
-                async with _dc() as c:
-                    await c.execute(
-                        "UPDATE jobs SET title=$1, updated_at=now() WHERE id=$2 AND title IS NULL",
-                        video_title[:500], __import__("uuid").UUID(job_id),
-                    )
-            except Exception:
-                pass
-        if thumbnail_url:
+    if video_title:
+        from core.db import direct_connect as _dc
+        try:
+            async with _dc() as c:
+                await c.execute(
+                    "UPDATE jobs SET title=$1, updated_at=now() WHERE id=$2 AND title IS NULL",
+                    video_title[:500], __import__("uuid").UUID(job_id),
+                )
+        except Exception:
+            pass
+    if thumbnail_url:
             logger.debug(f"Thumbnail extrait: {thumbnail_url[:80]}", extra=log_extra)
 
     # Métriques vidéo

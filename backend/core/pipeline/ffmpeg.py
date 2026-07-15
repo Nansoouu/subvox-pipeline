@@ -83,11 +83,16 @@ def _detect_hwaccel() -> str:
         r = subprocess.run(
             [ffmpeg, "-encoders"], capture_output=True, timeout=10, text=True
         )
-        for codec in ["h264_videotoolbox", "h264_nvenc", "h264_vaapi", "h264_qsv"]:
+        for codec in ["h264_videotoolbox", "h264_vaapi", "h264_qsv"]:
             if codec in r.stdout:
-                _HWACCEL_ENCODER = codec
-                logger.info("HW accel detecte", extra={"encoder": codec})
-                return codec
+                # Test rapide : essayer d'encoder 1 frame
+                test_cmd = [ffmpeg, "-f", "lavfi", "-i", "color=c=black:s=64x64:d=0.04",
+                           "-c:v", codec, "-f", "null", "-"]
+                tr = subprocess.run(test_cmd, capture_output=True, timeout=5)
+                if tr.returncode == 0:
+                    _HWACCEL_ENCODER = codec
+                    logger.info("HW accel detecte", extra={"encoder": codec})
+                    return codec
     except Exception:
         pass
     _HWACCEL_ENCODER = "libx264"

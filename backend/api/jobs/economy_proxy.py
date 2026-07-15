@@ -12,7 +12,7 @@ from core.logging_setup import get_logger
 router = APIRouter()
 logger = get_logger(__name__)
 
-ECONOMY_URL = "http://127.0.0.1:8001"
+ECONOMY_URL = "http://economy:8001"
 
 
 @router.post("/estimate-duration")
