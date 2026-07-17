@@ -718,6 +718,36 @@ async def run_pipeline(
         # PHASE 6 — Background (non-bloquant)
         # ═══════════════════════════════════════════════════════════════════
 
+        # ── Titre auto depuis le résumé (upload local) ───────────────
+        dl_data = await load_step_data(job_id, "downloading") or {}
+        if dl_data.get("upload_local") and not dl_data.get("video_title", "").startswith("subvox_"):
+            try:
+                from core.openrouter import call_openrouter
+                title_prompt = [{
+                    "role": "system",
+                    "content": "Génère un titre court (max 6 mots) en anglais pour cette vidéo, à partir du résumé suivant. Retourne UNIQUEMENT le titre, sans guillemets ni ponctuation."
+                }, {
+                    "role": "user",
+                    "content": summary[:2000] if summary else ""
+                }]
+                if summary and len(summary) > 50:
+                    title_resp, _, _ = await call_openrouter(title_prompt, temperature=0.3, max_tokens=50)
+                    if title_resp and len(title_resp.strip()) > 3:
+                        new_title = title_resp.strip()
+                        dl_data["video_title"] = new_title
+                        await save_step_data(job_id, "downloading", dl_data)
+                        # Mettre à jour le titre dans la DB
+                        try:
+                            from core.db import get_conn as _gc
+                            async with _gc() as _c:
+                                import uuid as _uuid
+                                await _c.execute("UPDATE jobs SET title=$1 WHERE id=$2", new_title, _uuid.UUID(job_id))
+                        except Exception:
+                            pass
+                        logger.info("Titre auto-généré depuis le résumé", extra={"title": new_title, **log_extra})
+            except Exception as e:
+                logger.warning("Génération titre auto échouée", extra={"error": str(e), **log_extra})
+
         # ÉTAPE : SEO multilingue (non-bloquant — ne raise pas d'erreur)
         if "seo" not in completed or "seo_all_langs" not in completed:
             try:
