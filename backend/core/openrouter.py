@@ -23,8 +23,8 @@ from core.llm.prompts import (
 logger = get_logger(__name__)
 
 # ── Modèles ───────────────────────────────────────────────
-PRIMARY_MODEL = "deepseek-chat"
-FALLBACK_MODEL = "gpt-4o-mini"
+PRIMARY_MODEL = "groq/llama-3.3-70b-versatile"
+FALLBACK_MODEL = "deepseek-chat"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
@@ -58,6 +58,10 @@ def _get_openrouter_key() -> str | None:
 
 # ── Tarifs ($/M tokens) ────────────────────────
 PRICING: dict[str, dict[str, float]] = {
+    "groq/llama-3.3-70b-versatile": {
+        "input_per_m": 0.0,
+        "output_per_m": 0.0,
+    },
     "deepseek-chat": {
         "input_per_m": 0.27,
         "output_per_m": 1.10,
@@ -178,13 +182,24 @@ async def call_openrouter(
     is_vision_model = model_lower.startswith(vision_prefixes)
 
     # Modèles texte DeepSeek
-    is_deepseek_model = model_lower.startswith("deepseek") or model_lower == PRIMARY_MODEL
+    is_deepseek_model = model_lower.startswith("deepseek")
+
+    # Modèles Groq (gratuits pour la traduction)
+    is_groq_model = model_lower.startswith("groq/")
+
+    GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
     if is_vision_model:
         api_url = OPENROUTER_URL
         api_key = _get_openrouter_key()
         if not api_key:
             logger.warning("Aucune clé OpenRouter configurée pour le modèle vision %s", model)
+            return None, 0, 0
+    elif is_groq_model:
+        api_url = GROQ_URL
+        api_key = getattr(settings, "GROQ_API_KEY", None) or os.environ.get("GROQ_API_KEY")
+        if not api_key:
+            logger.warning("Aucune clé Groq configurée pour le modèle %s", model)
             return None, 0, 0
     elif is_deepseek_model:
         api_url = DEEPSEEK_URL
@@ -256,6 +271,10 @@ async def call_openrouter(
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+
+    # Nettoyer le préfixe groq/ pour l'API Groq
+    if is_groq_model:
+        model = model.replace("groq/", "").replace("/", "-")
 
     # Cache hit
     if cache_key:
