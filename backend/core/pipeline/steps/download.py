@@ -39,6 +39,29 @@ async def step_download(
     tmp.mkdir(parents=True, exist_ok=True)
     source_mp4 = tmp / "source.mp4"
 
+    # ── Fichier local (upload direct) — pas de yt-dlp ──────────────
+    if source_url.startswith("file://"):
+        local_path = source_url.replace("file://", "")
+        src = Path(local_path)
+        if not src.exists():
+            return StepResult(success=False, error=f"Fichier introuvable: {local_path}")
+        # Copier vers le dossier de travail
+        import shutil
+        shutil.copy2(src, source_mp4)
+        logger.info(f"Fichier local copié: {local_path} → {source_mp4}", extra=log_extra)
+        # Métadonnées minimales
+        from core.pipeline.ffmpeg import _get_video_dims as _get_dims, _get_video_duration as _get_dur
+        duration = _get_dur(source_mp4)
+        width, height = _get_dims(source_mp4)
+        return StepResult(success=True, data={
+            "source_mp4": str(source_mp4),
+            "duration_s": duration,
+            "width": width,
+            "height": height,
+            "title": src.stem,  # Nom du fichier comme titre provisoire
+            "upload_local": True,
+        })
+
     import yt_dlp
 
     logger.info(f"Telechargement {source_url}", extra=log_extra)
