@@ -32,8 +32,7 @@ async def step_upload(
     if not burned_path.exists():
         raise RuntimeError("Fichier burned introuvable pour upload")
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    upload_filename = f"{prefix}{ts}.mp4"
+    upload_filename = f"{prefix}{job_id[:8]}.mp4"
     logger.info(f"Upload -> {upload_filename}", extra=log_extra)
 
     upload_res = await _upload_video(str(job_id), burned_path, filename=upload_filename)

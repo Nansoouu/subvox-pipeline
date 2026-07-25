@@ -56,7 +56,7 @@ if not _has_real:
 
         def to_ass_style(self) -> str:
             mlr, _, mv = self.calculate_margins()
-            return f"Style: Default,Arial,{self._font_size},&H00FFFFFF,&H000000FF,&H00000000,&HFF000000,-1,0,0,0,100,100,0,0,3,2,0,2,{mlr},{mlr},{mv},1"
+            return f"Style: Default,Noto Sans,{self._font_size},&H00FFFFFF,&H000000FF,&H00000000,&HFF000000,-1,0,0,0,100,100,0,0,3,2,0,2,{mlr},{mlr},{mv},1"
 
         def get(self, key: str, default=None):
             return self.defaults.get(key, default)
