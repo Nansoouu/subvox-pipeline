@@ -43,6 +43,7 @@ from api.jobs.check_url import router as check_url_router
 from api.jobs.economy_proxy import router as economy_proxy_router
 from api.jobs.resolve import router as jobs_resolve_router
 from api.jobs.upload import router as jobs_upload_router
+from api.jobs.dispatch import router as jobs_dispatch_router
 from api.stats import router as stats_router
 from api.platforms import router as platforms_router
 
@@ -53,6 +54,7 @@ app.include_router(jobs_status_router, prefix="/jobs")
 app.include_router(subtitles_router, prefix="/jobs")
 app.include_router(economy_proxy_router, prefix="/jobs")
 app.include_router(jobs_upload_router, prefix="/jobs")
+app.include_router(jobs_dispatch_router, prefix="/internal")
 app.include_router(stats_router, prefix="/stats")
 app.include_router(platforms_router)
 
