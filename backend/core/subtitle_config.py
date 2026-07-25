@@ -40,7 +40,7 @@ if not _has_real:
             elif kwargs:
                 self._vid_w = kwargs.get("vid_w", 1280)
                 self._vid_h = kwargs.get("vid_h", 720)
-            self._font_size = max(28, min(64, int(self._vid_h * 0.045)))
+            self._font_size = max(14, min(64, int(self._vid_h * 0.045)))
             self.defaults["default_font_size"] = self._font_size
 
         def calculate_font_size(self) -> int:

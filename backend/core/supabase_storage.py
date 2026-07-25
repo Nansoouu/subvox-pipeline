@@ -40,7 +40,7 @@ async def upload_video(
         logger.info(
             f"Video stored locally: {dest} ({dest.stat().st_size // 1024} KB)"
         )
-        return {"storage_url": f"file://{dest}"}
+        return {"storage_url": f"/storage/{Path(dest).name}"}
     except Exception as e:
         logger.error(f"Local storage failed: {e}")
         return None

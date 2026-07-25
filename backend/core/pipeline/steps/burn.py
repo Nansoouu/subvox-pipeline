@@ -78,6 +78,7 @@ def _burn_ass_with_progress(
         cmd = (
             [
                 ffmpeg,
+                "-fflags", "+genpts",
                 "-y",
                 "-i",
                 str(video),
@@ -98,6 +99,7 @@ def _burn_ass_with_progress(
         cmd = (
             [
                 ffmpeg,
+                "-fflags", "+genpts",
                 "-y",
                 "-i",
                 str(video),
@@ -186,6 +188,7 @@ def _burn_ass(
         cmd = (
             [
                 ffmpeg,
+                "-fflags", "+genpts",
                 "-y",
                 "-i",
                 str(video),
@@ -205,6 +208,7 @@ def _burn_ass(
         cmd = (
             [
                 ffmpeg,
+                "-fflags", "+genpts",
                 "-y",
                 "-i",
                 str(video),

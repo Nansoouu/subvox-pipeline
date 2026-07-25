@@ -8,7 +8,7 @@ from pathlib import Path
 
 from core.logging_setup import get_logger
 from core.config import settings
-from core.pipeline.groq import _transcribe_via_groq
+from core.pipeline.local_whisper import _transcribe_local
 from core.pipeline.srt import _parse_srt
 from core.pipeline.steps._helpers import _get_tmp
 from core.pipeline.steps._types import StepResult
@@ -33,7 +33,7 @@ async def step_transcribe(
     if not Path(source_mp4_path).exists():
         raise RuntimeError("Fichier source introuvable pour transcription")
 
-    whisper_result = _transcribe_via_groq(
+    whisper_result = _transcribe_local(
         Path(source_mp4_path), srt_path, txt_path, groq_api_key,
         economy_url=settings.ECONOMY_URL,
     )

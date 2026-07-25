@@ -369,10 +369,9 @@ def _merge_short_segments(
     max_chars_per_line: int = 42,
 ) -> List[Dict[str, str]]:
     """
-    Fusionne les segments trop courts (< min_duration_s) avec leur voisin.
-
-    Amélioration V2 : le texte fusionné est nettoyé (pas de " -- ")
-    et on vérifie que le résultat ne dépasse pas la limite de caractères.
+    Fusionne les segments qui se chevauchent proprement.
+    Garde le START du premier et le END du second, combine les textes.
+    Ne touche PAS aux segments qui ne se chevauchent pas.
     """
     if len(blocks) <= 1:
         return blocks
@@ -381,33 +380,27 @@ def _merge_short_segments(
     i = 0
     while i < len(blocks):
         block = dict(blocks[i])
-        start, end = _parse_srt_timecode(block["timecode"])
-        duration = end - start
-
-        # Segment trop court : fusionner avec le suivant
-        if duration < min_duration_s and i < len(blocks) - 1:
+        if i < len(blocks) - 1:
             next_block = blocks[i + 1]
+            _, curr_end = _parse_srt_timecode(block["timecode"])
             next_start, next_end = _parse_srt_timecode(next_block["timecode"])
-
-            # Texte fusionné proprement
-            merged_text = f"{block['text']}\n{next_block['text']}"
-
-            # Vérifier que le texte fusionné ne dépasse pas la limite raisonnable
-            clean_merged = _strip_styles(merged_text)
-            if len(clean_merged) <= max_chars_per_line * 3:
-                # Créer un bloc fusionné
-                merged = {
-                    "index": next_block["index"],
-                    "timecode": next_block["timecode"],
-                    "text": merged_text,
-                }
-                blocks[i + 1] = merged
-                i += 1  # Skip le bloc court (fusionné)
-                continue
-
+            # Chevauchement : le bloc courant finit APRÈS le début du suivant
+            if curr_end > next_start:
+                curr_start, _ = _parse_srt_timecode(block["timecode"])
+                merged_text = f"{block['text']}\n{next_block['text']}"
+                clean_merged = _strip_styles(merged_text)
+                if len(clean_merged) <= max_chars_per_line * 3:
+                    # Fusion : garde le start du premier, end du second
+                    merged = {
+                        "index": block["index"],
+                        "timecode": f"{_to_srt_time(curr_start)} --> {_to_srt_time(next_end)}",
+                        "text": merged_text,
+                    }
+                    result.append(merged)
+                    i += 2  # skip le suivant, déjà fusionné
+                    continue
         result.append(block)
         i += 1
-
     return result
 
 
@@ -490,14 +483,36 @@ def split_srt_advanced(
     # Post-processing : réduire les gaps entre segments
     new_blocks = _post_process_gaps(new_blocks, max_gap_s=max_gap_s)
 
-    # Post-processing : fusionner les segments trop courts
-    new_blocks = _merge_short_segments(
-        new_blocks,
-        min_duration_s=min_segment_duration_s,
-        max_chars_per_line=max_chars_per_line,
-    )
+    # Validation : swap timestamps inversés (start > end)
+    for block in new_blocks:
+        tc = block["timecode"]
+        if " --> " in tc:
+            parts = tc.split(" --> ")
+            start, end = parts[0].strip(), parts[1].strip()
+            from core.subtitle_splitter import _parse_srt_timecode, _to_srt_time
+            s, e = _parse_srt_timecode(tc)
+            if s > e:
+                block["timecode"] = f"{_to_srt_time(e)} --> {_to_srt_time(s)}"
 
-    # Réécrire le SRT avec index séquentiels
+    # Validation : swap timestamps inversés (start > end)
+    for block in new_blocks:
+        tc = block["timecode"]
+        if " --> " in tc:
+            _, _, raw = tc.partition(" --> ")
+            start_raw, end_raw = tc.split(" --> ")
+            from core.subtitle_splitter import _parse_srt_timecode, _to_srt_time
+            s, e = _parse_srt_timecode(tc)
+            if s > e:
+                block["timecode"] = f"{_to_srt_time(e)} --> {_to_srt_time(s)}"
+
+    # Validation : swap timestamps inverses (start > end)
+    for block in new_blocks:
+        tc = block.get("timecode", "")
+        if " --> " in tc:
+            s, e = _parse_srt_timecode(tc)
+            if s > e:
+                block["timecode"] = _to_srt_time(e) + " --> " + _to_srt_time(s)
+    # Reecrire le SRT
     return _write_srt(new_blocks)
 
 

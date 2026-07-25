@@ -280,7 +280,7 @@ def process_video_task(
         soft_subs = (
             settings.SOFT_SUBS_ENABLED
             if hasattr(settings, "SOFT_SUBS_ENABLED")
-            else True
+            else False
         )
         result = asyncio.run(
             process_video(

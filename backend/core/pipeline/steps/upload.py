@@ -27,7 +27,7 @@ async def step_upload(
 
     log_extra = {"job_id": job_id}
     tmp = _get_tmp(job_id)
-    burned_path = Path(source_path) if source_path else tmp / "burned.mp4"
+    burned_path = Path(source_path) if source_path else tmp / "burned_target.mp4"
 
     if not burned_path.exists():
         raise RuntimeError("Fichier burned introuvable pour upload")
@@ -40,7 +40,7 @@ async def step_upload(
     if not upload_res:
         # Fallback: local storage (dev mode — no Supabase)
         logger.info("Supabase upload failed — saving locally", extra=log_extra)
-        local_dir = Path(settings.LOCAL_STORAGE_DIR) if hasattr(settings, "LOCAL_STORAGE_DIR") else Path("/tmp/subvox-output")
+        local_dir = Path(settings.LOCAL_STORAGE_DIR) if hasattr(settings, "LOCAL_STORAGE_DIR") else Path("/app/storage")
         local_dir.mkdir(parents=True, exist_ok=True)
         local_path = local_dir / upload_filename
         import shutil

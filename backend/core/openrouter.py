@@ -23,10 +23,10 @@ from core.llm.prompts import (
 logger = get_logger(__name__)
 
 # ── Modèles ───────────────────────────────────────────────
-PRIMARY_MODEL = "groq/llama-3.3-70b-versatile"
+PRIMARY_MODEL = "deepseek-v4-flash"
 FALLBACK_MODEL = "deepseek-chat"
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_URL = "https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 OPENROUTER_TIMEOUT = 90.0
 _OPENROUTER_KEY: str | None = None

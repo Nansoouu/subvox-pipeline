@@ -93,6 +93,10 @@ async def get_public_jobs(
             """
             SELECT
                 j.id AS job_id,
+                j.title,
+                j.thumbnail_url,
+                j.summary,
+                j.video_type,
                 j.source_url,
                 j.target_lang,
                 j.status,
@@ -123,9 +127,13 @@ async def get_public_jobs(
             "job_id": str(row["job_id"]),
             "short_id": str(row["job_id"])[:8],
             "source": _source_label(row["source_url"]),
-            "source_url": row["source_url"] if is_owner else None,  # hide URL for non-owners
+            "source_url": row["source_url"],  # public (YouTube/X URL)
             "target_lang": row["target_lang"],
             "status": row["status"],
+            "title": row.get("title"),
+            "thumbnail_url": row.get("thumbnail_url"),
+            "summary": row.get("summary"),
+            "video_type": row.get("video_type"),
             "created_at": row["created_at"].isoformat() if row["created_at"] else None,
             "completed_at": row["updated_at"].isoformat() if row["updated_at"] else None,
             "duration_s": int(row["video_duration_s"] or 0),
