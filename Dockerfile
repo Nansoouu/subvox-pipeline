@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     fonts-noto-cjk \
     fonts-noto \
-    fonts-noto-arabic \
     && rm -rf /var/lib/apt/lists/*
 
 # Install deno for yt-dlp YouTube extraction
