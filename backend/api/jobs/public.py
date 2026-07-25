@@ -120,7 +120,6 @@ async def get_public_jobs(
 
     results = []
     for row in rows:
-        # Detecter le proprietaire via user_id (wallet address)
         wallet_in_db = row.get("user_id")
         is_owner = bool(current_wallet and wallet_in_db and current_wallet.lower() == wallet_in_db.lower())
         results.append({
@@ -128,7 +127,7 @@ async def get_public_jobs(
             "short_id": str(row["job_id"])[:8],
             "source": _source_label(row["source_url"]),
             "source_url": row["source_url"] if is_owner else None,  # hide URL for non-owners
-            "group_key": row["source_url"],  # always present for frontend grouping
+            "group_key": row.get("source_url") or row.get("id"),
             "target_lang": row["target_lang"],
             "status": row["status"],
             "title": row.get("title"),
@@ -154,4 +153,5 @@ async def get_public_jobs(
             "subtest_tx": None,  # on-chain
         })
 
-    return {"jobs": results, "total": len(results), "offset": offset, "limit": limit}
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content={"jobs": results, "total": len(results), "offset": offset, "limit": limit}, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0", "Pragma": "no-cache", "Expires": "0"})
