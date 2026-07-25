@@ -786,6 +786,8 @@ async def run_pipeline(
             try:
                 fusion_data = await load_step_data(job_id, "fusion")
                 en_highlights = (fusion_data or {}).get("highlights", [])
+                if isinstance(en_highlights, (int, float)):
+                    en_highlights = []
                 target_langs_list = [target_lang]
                 if source_lang and source_lang != target_lang:
                     target_langs_list.append(source_lang)

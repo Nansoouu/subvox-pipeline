@@ -50,6 +50,22 @@ async def proxy_submit(request: Request):
         data = r.json()
     except Exception:
         data = {"error": "economy_error", "detail": r.text[:500]}
+    
+    # Auto-dispatch after successful submit
+    if r.status_code == 200 and data.get("job_id"):
+        try:
+            from tasks.pipeline_task import process_video_task
+            jid = data["job_id"]
+            # Parse source URL and target lang from the original request
+            import json as _json
+            req_body = _json.loads(body) if isinstance(body, (bytes, str)) else {}
+            src = req_body.get("source_url", "")
+            tgt = req_body.get("target_lang", "")
+            if src and tgt:
+                process_video_task.delay(job_id=jid, source_url=src, target_lang=tgt, user_id="system")
+        except Exception:
+            pass
+    
     return JSONResponse(content=data, status_code=r.status_code)
 
 
