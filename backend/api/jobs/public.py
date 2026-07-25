@@ -127,7 +127,8 @@ async def get_public_jobs(
             "job_id": str(row["job_id"]),
             "short_id": str(row["job_id"])[:8],
             "source": _source_label(row["source_url"]),
-            "source_url": row["source_url"],  # public (YouTube/X URL)
+            "source_url": row["source_url"] if is_owner else None,  # hide URL for non-owners
+            "group_key": row["source_url"],  # always present for frontend grouping
             "target_lang": row["target_lang"],
             "status": row["status"],
             "title": row.get("title"),
