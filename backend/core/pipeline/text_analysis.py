@@ -280,7 +280,10 @@ class TextAnalysisStep(AnalysisStep):
         seen_timestamps: set[tuple] = set()
         all_highlights: list[dict] = []
         for r in results:
-            for h in (r.get("highlights", []) or []):
+            raw_h = r.get("highlights", [])
+            if not isinstance(raw_h, list):
+                continue
+            for h in raw_h:
                 if not isinstance(h, dict):
                     continue
                 key = (round(h.get("timestamp_s", 0), 1), round(h.get("end_s", 0), 1))

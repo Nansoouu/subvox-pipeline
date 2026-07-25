@@ -38,7 +38,7 @@ async def translate_all_metadata(
     """For each target lang, translate highlights + set translated title/slug."""
     if not seo_metadata:
         return {}
-    if isinstance(en_highlights, (int, float)):
+    if not isinstance(en_highlights, list):
         en_highlights = []
 
     updates = {}
