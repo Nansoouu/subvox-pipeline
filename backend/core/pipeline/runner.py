@@ -445,7 +445,7 @@ async def run_pipeline(
                 job_id,
                 tx_data.get("raw_srt", ""),
                 tx_data.get("text", ""),
-                segments_json=tx_data.get("segments"),
+                segments_json=tx_data.get("segments") if isinstance(tx_data.get("segments"), list) else None,
             )
             metrics.record_step("filtering", duration_s=_time.time() - _step_start["filtering"])
             if not result.success:
