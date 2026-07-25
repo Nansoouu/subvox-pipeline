@@ -36,6 +36,7 @@ from core.pipeline.persist import (
     get_vtt_url,
 )
 from core.pipeline.seo import generate_seo_all_langs, save_seo_metadata_multilingual
+from core.pipeline.steps.lang_metadata import translate_all_metadata, update_job_title_per_lang
 from core.pipeline.duration_tiers import get_tier, DurationTier
 from core.pipeline.steps import (
     StepResult,
@@ -779,6 +780,43 @@ async def run_pipeline(
         else:
             if "seo" in completed or "seo_all_langs" in completed:
                 logger.info("Etape SEO deja completee -- skip", extra=log_extra)
+
+        # ÉTAPE : Traduction métadonnées + highlights par langue
+        if "lang_metadata" not in completed:
+            try:
+                fusion_data = await load_step_data(job_id, "fusion")
+                en_highlights = (fusion_data or {}).get("highlights", [])
+                target_langs_list = [target_lang]
+                if source_lang and source_lang != target_lang:
+                    target_langs_list.append(source_lang)
+
+                if seo_all and en_highlights:
+                    translated = await translate_all_metadata(
+                        job_id=job_id,
+                        seo_metadata=seo_all,
+                        en_highlights=en_highlights,
+                        target_langs=target_langs_list,
+                        source_lang=source_lang or "en",
+                    )
+                    if translated:
+                        await save_seo_metadata_multilingual(job_id, translated)
+                        # Update job title + slug for target language
+                        tgt_seo = translated.get(target_lang, {})
+                        if tgt_seo.get("title"):
+                            await update_job_title_per_lang(
+                                job_id, target_lang,
+                                tgt_seo["title"],
+                                tgt_seo.get("slug", ""),
+                            )
+                await mark_step_completed(job_id, "lang_metadata")
+            except Exception as lm_err:
+                logger.warning(
+                    "Lang metadata non-bloquant echoue",
+                    extra={"error": str(lm_err), **log_extra},
+                )
+                await mark_step_completed(job_id, "lang_metadata")
+        else:
+            logger.info("Etape 'lang_metadata' deja completee -- skip", extra=log_extra)
 
         # ÉTAPE : Watermark PNG
         if "watermark" not in completed:
