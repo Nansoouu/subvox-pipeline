@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
     unzip \
+    fonts-noto-cjk \
+    fonts-noto \
+    fonts-noto-arabic \
     && rm -rf /var/lib/apt/lists/*
 
 # Install deno for yt-dlp YouTube extraction
@@ -46,4 +49,3 @@ WORKDIR /app
 ENV C_FORCE_ROOT=no
 
 CMD ["celery", "-A", "core.celery_app", "worker", "--loglevel=info", "--concurrency=4", "-Q", "video_processing,video_analysis,short,medium,long,xlong,economy"]
-RUN apt-get update && apt-get install -y fonts-noto-cjk fonts-noto fonts-noto-arabic && rm -rf /var/lib/apt/lists/*
