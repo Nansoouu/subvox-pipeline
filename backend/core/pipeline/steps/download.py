@@ -199,7 +199,7 @@ async def step_download(
             raise RuntimeError(f"yt-dlp metadata empty: {r_info.stderr[:200]}")
 
         # 2. Download the video
-        dl_cmd = base_cmd + ["--no-part", "-f", "bestvideo[height<=1080][ext=mp4]+(bestaudio[ext=m4a]/bestaudio)/best[height<=1080][ext=mp4]/best", "--merge-output-format", "mp4", "--no-playlist", "-o", str(source_mp4), source_url]
+        dl_cmd = base_cmd + ["--no-part", "--file-access-strategy", "native", "--retries", "5", "-f", "bestvideo[height<=1080][ext=mp4]+(bestaudio[ext=m4a]/bestaudio)/best[height<=1080][ext=mp4]/best", "--merge-output-format", "mp4", "--no-playlist", "-o", str(source_mp4), source_url]
         r_dl = subprocess.run(dl_cmd, capture_output=True, timeout=7200, text=True)
         if r_dl.returncode != 0 or not source_mp4.exists():
             raise RuntimeError(f"yt-dlp download failed: {r_dl.stderr[:500] if r_dl.stderr else 'unknown'}")
