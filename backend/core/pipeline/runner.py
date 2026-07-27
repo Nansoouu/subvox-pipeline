@@ -331,7 +331,7 @@ async def run_pipeline(
                 return result.data
 
             await save_step_data(job_id, "downloading", result.data)
-            if "source_mp4" in result.files:
+            if result.files and "source_mp4" in result.files:
                 await save_pipeline_file(
                     job_id, "downloading", "source_mp4", result.files["source_mp4"]
                 )
