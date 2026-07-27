@@ -15,8 +15,8 @@ from core.pipeline.ffmpeg import (
     _get_video_frames,
 )
 from core.pipeline.cookies import _is_valid_cookies_file
-from core.pipeline.steps._helpers import _get_tmp
-from core.pipeline.steps._types import StepResult
+from core.pipeline.steps import _get_tmp
+from core.pipeline.steps import StepResult
 
 logger = get_logger(__name__)
 
@@ -32,7 +32,6 @@ async def step_download(
     Extrait métadonnées (durée, langue, thumbnail, width, height).
     Upload source vers Supabase si configuré.
     """
-    from core.supabase_storage import upload_video as _upload_video
 
     log_extra = {"job_id": job_id}
     tmp = _get_tmp(job_id)
@@ -200,7 +199,7 @@ async def step_download(
             raise RuntimeError(f"yt-dlp metadata empty: {r_info.stderr[:200]}")
 
         # 2. Download the video
-        dl_cmd = base_cmd + ["-f", "bestvideo[height<=1080][ext=mp4]+(bestaudio[ext=m4a]/bestaudio)/best[height<=1080][ext=mp4]/best", "--merge-output-format", "mp4", "--no-playlist", "-o", str(source_mp4), source_url]
+        dl_cmd = base_cmd + ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4", "--no-playlist", "-o", str(source_mp4), source_url]
         r_dl = subprocess.run(dl_cmd, capture_output=True, timeout=7200, text=True)
         if r_dl.returncode != 0 or not source_mp4.exists():
             raise RuntimeError(f"yt-dlp download failed: {r_dl.stderr[:500] if r_dl.stderr else 'unknown'}")
@@ -277,17 +276,13 @@ async def step_download(
 
     # Si download_only, upload final et on termine
     if download_only:
-        from core.supabase_storage import upload_video as _upload_video2
-
-        storage_key = f"download_{job_id}.mp4"
-        upload_res = await _upload_video2(
-            f"download_{job_id}",
-            source_mp4,
-            filename=f"download_{job_id}.mp4",
-        )
-        if upload_res:
-            storage_key = upload_res.get("storage_url", storage_key)
-            logger.info("Download mode termine", extra=log_extra)
+        import shutil
+        storage_dir = Path("/app/storage")
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        dl_path = storage_dir / f"download_{job_id}.mp4"
+        shutil.copy2(str(source_mp4), str(dl_path))
+        storage_key = f"/storage/download_{job_id}.mp4"
+        logger.info("Download mode termine", extra=log_extra)
         return StepResult(
             data={
                 "storage_url": storage_key,

@@ -25,8 +25,8 @@ from core.pipeline.watermark import (
     _compute_sporadic_timecodes,
     _build_sporadic_drawtext_filters,
 )
-from core.pipeline.steps._helpers import _get_tmp
-from core.pipeline.steps._types import StepResult
+from core.pipeline.steps import _get_tmp
+from core.pipeline.steps import StepResult
 from core.config import settings
 
 logger = get_logger(__name__)

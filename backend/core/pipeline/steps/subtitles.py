@@ -18,8 +18,8 @@ from core.pipeline.srt import (
 )
 from core.subtitle_splitter import split_srt_advanced
 from core.pipeline.duration_tiers import DurationTier
-from core.pipeline.steps._helpers import _get_tmp
-from core.pipeline.steps._types import StepResult
+from core.pipeline.steps import _get_tmp
+from core.pipeline.steps import StepResult
 
 logger = get_logger(__name__)
 

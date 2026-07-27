@@ -1,13 +1,10 @@
-"""
-pipeline/__init__.py — Sous-package pipeline découpé en modules — Subvox
+"""pipeline/__init__.py — Sous-package pipeline découpé en modules — Subvox
 
 Modules :
   - cookies    : _is_valid_cookies_file
   - ffmpeg     : _ffmpeg_path, _has_libass, _get_video_dims, etc.
   - srt        : _parse_srt, _write_srt, _srt_to_ass, etc.
-  - groq       : _transcribe_via_groq
-  - pillow     : _burn_subtitles_pillow
-  - watermark  : _generate_watermark_png
+  - helpers    : _set_status, _update_progress, heartbeat, etc.
   - runner     : _burn_ass, run_pipeline (alias process_video)
 """
 
@@ -41,8 +38,6 @@ from core.pipeline.srt import (
     _srt_time_to_ass,
     _adjust_duration_based_on_text,
 )
-from core.pipeline.groq import _transcribe_via_groq
-from core.pipeline.pillow import _burn_subtitles_pillow
 from core.pipeline.watermark import _generate_watermark_png
 from core.pipeline.seo import generate_seo_metadata, save_seo_metadata
 from core.pipeline.steps.burn import _burn_ass
@@ -72,8 +67,6 @@ __all__ = [
     "_parse_time_to_seconds",
     "_srt_time_to_ass",
     "_adjust_duration_based_on_text",
-    "_transcribe_via_groq",
-    "_burn_subtitles_pillow",
     "_generate_watermark_png",
     "_burn_ass",
     "run_pipeline",

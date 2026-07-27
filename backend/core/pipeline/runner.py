@@ -50,7 +50,6 @@ from core.pipeline.steps import (
     step_vtt_export,
     step_watermark,
     step_burn,
-    step_upload,
     step_meta_analysis,
     step_text_analysis,
     step_visual_analysis,
@@ -59,7 +58,7 @@ from core.pipeline.steps import (
     step_fusion,
     _get_tmp,
 )
-from core.pipeline._runner_helpers import (
+from core.pipeline.helpers import (
     _set_status,
     _update_progress,
     _start_heartbeat,
@@ -960,7 +959,6 @@ async def run_pipeline(
             async def _upload_target():
                 if "uploading" not in completed:
                     return await _retry_burn_upload(
-                        job_id, "upload", log_extra, step_upload, job_id,
                         source_path=str(tmp / "burned_target.mp4"),
                     )
                 return StepResult(success=True, data={
@@ -974,7 +972,6 @@ async def run_pipeline(
                     # Upload vers le prefix source_sub_
                     src_path = str(tmp / "burned_source.mp4")
                     return await _retry_burn_upload(
-                        job_id, "upload_source", log_extra, step_upload, job_id,
                         source_path=src_path, prefix="source_sub_",
                     )
                 return StepResult(success=True, data={"skipped": True})

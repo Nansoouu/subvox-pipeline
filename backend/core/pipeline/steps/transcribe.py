@@ -10,8 +10,8 @@ from core.logging_setup import get_logger
 from core.config import settings
 from core.pipeline.local_whisper import _transcribe_local
 from core.pipeline.srt import _parse_srt
-from core.pipeline.steps._helpers import _get_tmp
-from core.pipeline.steps._types import StepResult
+from core.pipeline.steps import _get_tmp
+from core.pipeline.steps import StepResult
 
 logger = get_logger(__name__)
 
