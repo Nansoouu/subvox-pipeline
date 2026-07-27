@@ -35,7 +35,6 @@ async def step_transcribe(
 
     whisper_result = _transcribe_local(
         Path(source_mp4_path), srt_path, txt_path, groq_api_key,
-        economy_url=settings.ECONOMY_URL,
     )
     if not whisper_result:
         raise RuntimeError("Transcription Groq échouée")

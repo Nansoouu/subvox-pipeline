@@ -207,16 +207,7 @@ def process_video_task(
                 wallet = _aio.run(_get_wallet())
             except Exception:
                 pass
-            if wallet:
-                import httpx
-                resp = httpx.get(
-                    f"{settings.ECONOMY_URL}/billing/groq-key/{wallet}",
-                    timeout=5,
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if data.get("key"):
-                        groq_key = data["key"]
+            # economy removed
         except Exception as e:
             logger.warning(f"Groq key resolution failed: {e}")
         if not groq_key:
@@ -226,20 +217,7 @@ def process_video_task(
             groq_key = ""
             logger.warning("Groq key from config is a placeholder, ignoring")
         if not groq_key:
-            # Fallback: try to use a community pool key
-            try:
-                import httpx as _httpx
-                pool_resp = _httpx.get(
-                    f"{settings.ECONOMY_URL}/billing/groq-key/pool",
-                    timeout=5,
-                )
-                if pool_resp.status_code == 200:
-                    pool_data = pool_resp.json()
-                    if pool_data.get("key"):
-                        groq_key = pool_data["key"]
-                        logger.info("Clé Groq communautaire utilisée")
-            except Exception as pe:
-                logger.warning(f"Pool key fallback failed: {pe}")
+            # economy removed
         if not groq_key:
             # Direct DB fallback: query community pool keys directly
             # (workaround for Economy API FastAPI compat issue)

@@ -13,7 +13,7 @@ def _get_model():
 def _secs_to_srt(s):
     h=int(s//3600); m=int((s%3600)//60); s2=int(s%60); ms=int((s-int(s))*1000)
     return f"{h:02d}:{m:02d}:{s2:02d},{ms:03d}"
-def _transcribe_local(p,srt,txt,gk="",economy_url=None):
+def _transcribe_local(p,srt,txt,gk=""):
     import traceback as tb
     try:
         m=_get_model(); logger.info(f"whisper {MODEL_SIZE} transcribing {p.name}...")

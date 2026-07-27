@@ -208,17 +208,8 @@ async def call_openrouter(
         if api_key and (api_key.startswith("«") or len(api_key) < 10):
             api_key = None
         if not api_key:
-            # Fallback: try community pool
-            try:
-                import httpx as _hx
-                _r = _hx.get(f"{settings.ECONOMY_URL}/billing/deepseek-key/pool", timeout=5)
-                if _r.status_code == 200:
-                    _d = _r.json()
-                    if _d.get("key"):
-                        api_key = _d["key"]
-                        logger.info("Clé DeepSeek du pool communautaire")
-            except Exception:
-                pass
+            # Fallback: direct DeepSeek key from settings
+            api_key = settings.DEEPSEEK_API_KEY or os.environ.get("DEEPSEEK_API_KEY")
         if not api_key:
             # Direct DB fallback
             try:
@@ -255,14 +246,6 @@ async def call_openrouter(
         # Skip placeholder keys (redacted by config system)
         if api_key and (api_key.startswith("«") or len(api_key) < 10):
             api_key = None
-        if not api_key:
-            import httpx as _hx2
-            try:
-                _r2 = _hx2.get(f"{settings.ECONOMY_URL}/billing/deepseek-key/pool", timeout=5)
-                if _r2.status_code == 200 and _r2.json().get("key"):
-                    api_key = _r2.json()["key"]
-            except Exception:
-                pass
         if not api_key:
             logger.warning("Aucune clé API configurée pour le modèle %s", model)
             return None, 0, 0
