@@ -17,10 +17,10 @@ async def step_watermark(
 ) -> StepResult:
     """
     Ne genere un watermark que si l'utilisateur a un texte personnalise en DB.
-    Sinon retourne StepResult(data={"watermark_generated": False}).
+    Sinon retourne StepResult(success=True, data={"watermark_generated": False}).
     """
     if not user_id or user_id == "anonymous":
-        return StepResult(data={"watermark_generated": False})
+        return StepResult(success=True, data={"watermark_generated": False})
 
     # Chercher le texte personnalise en DB
     wm_text = ""
@@ -46,7 +46,7 @@ async def step_watermark(
         )
 
     if not wm_text:
-        return StepResult(data={"watermark_generated": False})
+        return StepResult(success=True, data={"watermark_generated": False})
 
     # Si on arrive ici, l'utilisateur a un texte perso
     # Le watermark sera genere via drawtext dans l'etape burn

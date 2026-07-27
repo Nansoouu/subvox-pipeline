@@ -270,7 +270,7 @@ async def step_download(
         shutil.copy2(str(source_mp4), str(dl_path))
         storage_key = f"/storage/download_{job_id}.mp4"
         logger.info("Download mode termine", extra=log_extra)
-        return StepResult(
+        return StepResult(success=True,
             data={
                 "storage_url": storage_key,
                 "summary": "",
@@ -287,7 +287,7 @@ async def step_download(
 
     video_category = compute_video_category(duration)
 
-    return StepResult(
+    return StepResult(success=True,
         data={
             "duration_s": duration,
             "source_lang": source_lang,

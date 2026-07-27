@@ -229,7 +229,7 @@ async def step_vtt_export(
             "Fichier ASS introuvable pour export VTT — skip",
             extra=log_extra,
         )
-        return StepResult(data={"vtt_exported": False, "reason": "no_ass"})
+        return StepResult(success=True, data={"vtt_exported": False, "reason": "no_ass"})
 
     ass_content = ass_path.read_text(encoding="utf-8")
 

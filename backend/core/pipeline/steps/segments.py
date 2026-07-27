@@ -35,7 +35,7 @@ async def step_segments_save(
     if not srt_to_burn:
         srt_to_burn = raw_srt
     if not srt_to_burn:
-        return StepResult(data={"segments_saved": 0})
+        return StepResult(success=True, data={"segments_saved": 0})
 
     try:
         blocks_original = _parse_srt(raw_srt)
@@ -80,7 +80,7 @@ async def step_segments_save(
                 f"{len(blocks_translated)} segments sauvegardes en DB",
                 extra=log_extra,
             )
-            return StepResult(data={"segments_saved": len(blocks_translated)})
+            return StepResult(success=True, data={"segments_saved": len(blocks_translated)})
         else:
             logger.warning(
                 f"Nombre de blocs different (original: {len(blocks_original)}, "
@@ -130,10 +130,10 @@ async def step_segments_save(
                     "Echec fallback sauvegarde segments DB",
                     extra={"error": str(e2), **log_extra},
                 )
-                return StepResult(data={"segments_saved": 0})
+                return StepResult(success=True, data={"segments_saved": 0})
     except Exception as e:
         logger.warning(
             "Echec sauvegarde segments DB",
             extra={"error": str(e), **log_extra},
         )
-        return StepResult(data={"segments_saved": 0})
+        return StepResult(success=True, data={"segments_saved": 0})
