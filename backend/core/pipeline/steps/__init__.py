@@ -15,6 +15,7 @@ class StepResult:
     data: dict[str, Any] | None = None
     error: str | None = None
     skipped: bool = False
+    files: dict[str, str] | None = None
 
 
 PROCESSING_DIR = Path("/tmp/subvox-processing")

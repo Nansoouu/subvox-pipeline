@@ -246,27 +246,14 @@ async def step_download(
 
         # Upload source vers stockage local
     if source_mp4.exists():
-        try:
-            source_upload_res = await _upload_video(
-                str(job_id), source_mp4, filename=f"source_{job_id}.mp4"
-            )
-            if source_upload_res:
-                source_storage_url = source_upload_res["storage_url"]
-                logger.info(
-                    f"Source uploadee: {source_storage_url[:80]}", extra=log_extra
-                )
-        except Exception as e:
-            logger.error(f"Upload source echoue: {e}", extra=log_extra)
-        if not source_storage_url or source_storage_url.startswith("file://"):
-            # Fallback local (dev mode, no Supabase) — use /storage/ URL
-            import shutil
-            storage_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "storage"
-            storage_dir.mkdir(parents=True, exist_ok=True)
-            local_path = storage_dir / f"source_{job_id}.mp4"
-            if not local_path.exists():
-                shutil.copy2(str(source_mp4), str(local_path))
-            source_storage_url = f"http://127.0.0.1:8000/storage/source_{job_id}.mp4"
-            logger.info(f"Source sauvegardee localement: {source_storage_url}", extra=log_extra)
+        import shutil
+        storage_dir = Path("/app/storage")
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        local_path = storage_dir / f"source_{job_id}.mp4"
+        if not local_path.exists():
+            shutil.copy2(str(source_mp4), str(local_path))
+        source_storage_url = f"/storage/source_{job_id}.mp4"
+        logger.info(f"Source sauvegardee: {source_storage_url}", extra=log_extra)
 
     # Vérification taille max
     if duration > settings.VIDEO_MAX_SECONDS:
