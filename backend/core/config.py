@@ -115,7 +115,6 @@ class Settings:
 
     # ── CORS ─────────────────────────────────────────────────────────
     CORS_ORIGINS: str = _get("cors_origins", "http://localhost:3000,http://localhost:3001,http://localhost:3002")
-    ECONOMY_URL: str = _get("economy_url", "http://localhost:8001")
 
     # ── Voicebox ─────────────────────────────────────────────────────
     VOICEBOX_API_URL: str = _get("voicebox_api_url", "http://voicebox:8000")

@@ -27,7 +27,6 @@ _ECONOMY_TIMEOUT = 5        # timeout pour les appels de vérification
 
 def _check_key_quota(
     api_key: str,
-    economy_url: str | None = None,
     expected_duration_s: float = 10.0,
 ) -> dict:
     """
@@ -42,15 +41,13 @@ def _check_key_quota(
     En cas d'erreur (économie injoignable, pas d'URL), retourne un dict
     avec has_quota=True pour ne pas bloquer la transcription.
     """
-    if not economy_url:
-        return {"has_quota": True, "remaining_s": 7200, "daily_limit_s": 7200, "daily_usage_s": 0}
+    return {"has_quota": True, "remaining_s": 7200, "daily_limit_s": 7200, "daily_usage_s": 0}
 
     import httpx as _httpx
 
     key_short = api_key[:8] + "..."
     try:
         resp = _httpx.get(
-            f"{economy_url}/billing/groq-key/check-quota",
             params={"key_prefix": api_key[:16]},
             timeout=_ECONOMY_TIMEOUT,
         )
@@ -89,20 +86,10 @@ def _check_key_quota(
     return {"has_quota": True, "remaining_s": 7200, "daily_limit_s": 7200, "daily_usage_s": 0}
 
 
-def _report_groq_usage(api_key: str, duration_s: int, economy_url: str | None = None) -> None:
-    """Signale au service economy le temps consommé par cette clé."""
-    if not economy_url:
-        return
-    import httpx as _httpx
+def _report_groq_usage(api_key: str, duration_s: int) -> None:
+    """Stub — Groq usage reporting was in economy service (removed)."""
+    pass
 
-    try:
-        _httpx.post(
-            f"{economy_url}/billing/groq-key/report-usage",
-            json={"key_prefix": api_key[:16], "duration_s": duration_s},
-            timeout=_ECONOMY_TIMEOUT,
-        )
-    except Exception:
-        pass  # non bloquant
 
 
 def _compute_timeout(audio_duration_s: float) -> float:
@@ -265,7 +252,6 @@ def _transcribe_via_groq(
     srt_out: Path,
     txt_out: Path,
     api_key: str,
-    economy_url: str | None = None,
 ) -> dict | None:
     """
     Transcription via Groq API.
@@ -303,7 +289,6 @@ def _transcribe_via_groq(
     chunk_duration_s = _GROQ_CHUNK_DURATION
     key_quota_cache: dict[str, dict] = {}
     for k in api_keys:
-        quota = _check_key_quota(k, economy_url, expected_duration_s=chunk_duration_s)
         key_quota_cache[k] = quota
         if not quota["has_quota"]:
             remaining = quota["remaining_s"]
@@ -516,7 +501,6 @@ def _transcribe_via_groq(
             # Structurer les segments avec l'offset du silence initial
             segments = _build_segments_list(raw_segments, language, offset_s=-silence_offset, chunk_duration_s=float(estimated_duration_s))
             total_duration_s = max((s["end_s"] for s in segments), default=estimated_duration_s)
-            _report_groq_usage(api_keys[used_key_idx], int(total_duration_s), economy_url)
 
             # Générer SRT + TXT (rétrocompatibilité)
             if not segments:
@@ -676,7 +660,6 @@ def _transcribe_via_groq(
         if not all_segments:
             return None
 
-        _report_groq_usage(api_keys[last_key_idx], total_consumed_s, economy_url)
 
         # Fusion finale
         srt_lines, text_parts = [], []
