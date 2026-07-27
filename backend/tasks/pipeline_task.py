@@ -217,7 +217,7 @@ def process_video_task(
             groq_key = ""
             logger.warning("Groq key from config is a placeholder, ignoring")
         if not groq_key:
-            # economy removed
+            pass
         if not groq_key:
             # Direct DB fallback: query community pool keys directly
             # (workaround for Economy API FastAPI compat issue)
