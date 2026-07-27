@@ -4,14 +4,10 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from core.logging_setup import get_logger
-from core.config import settings
+from core.celery_app import celery_app
 
 logger = get_logger(__name__)
 router = APIRouter()
-
-import redis as _redis
-
-_redis_client = _redis.Redis.from_url(settings.REDIS_URL)
 
 
 class DispatchRequest(BaseModel):
@@ -27,23 +23,21 @@ class RollbackRequest(BaseModel):
 
 @router.post("/dispatch", status_code=200)
 async def dispatch_job(req: DispatchRequest):
-    """Push a Celery task directly to the xlong Redis queue."""
+    """Dispatch a job to the Celery worker via send_task."""
     try:
-        task_id = str(uuid.uuid4())
-        task_msg = json.dumps({
-            "id": task_id,
-            "task": "tasks.pipeline_task.process_video_task",
-            "args": [],
-            "kwargs": {
+        result = celery_app.send_task(
+            "tasks.pipeline_task.process_video_task",
+            args=[],
+            kwargs={
                 "job_id": req.job_id,
                 "source_url": req.source_url,
                 "target_lang": req.target_lang,
                 "user_id": req.user_id,
             },
-        })
-        _redis_client.lpush("xlong", task_msg)
-        logger.info(f"Job {req.job_id[:8]} dispatched (task {task_id[:8]})")
-        return {"status": "ok", "task_id": task_id}
+            queue="xlong",
+        )
+        logger.info(f"Job {req.job_id[:8]} dispatched (task {result.id[:8]})")
+        return {"status": "ok", "task_id": result.id}
     except Exception as e:
         logger.error(f"Dispatch failed for {req.job_id[:8]}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
