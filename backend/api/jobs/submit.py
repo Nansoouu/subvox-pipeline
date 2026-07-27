@@ -4,7 +4,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from core.logging_setup import get_logger
 from core.db import direct_connect
-from tasks.pipeline_task import process_video_task
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -24,21 +23,19 @@ async def submit_job(req: SubmitRequest):
     source_url = req.source_url.strip()
 
     try:
-        conn = direct_connect()
-        cur = conn.cursor()
-        cur.execute(
-            """INSERT INTO jobs (id, source_url, target_lang, mode, status, visitor_token, visibility, created_at)
-               VALUES (%s, %s, %s, %s, 'queued', %s, %s, NOW())""",
-            (job_id, source_url, req.target_lang, req.mode, req.visitor_token or str(uuid.uuid4()), req.visibility),
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
+        async with direct_connect() as conn:
+            await conn.execute(
+                """INSERT INTO jobs (id, source_url, target_lang, mode, status, visitor_token, visibility, created_at)
+                   VALUES ($1, $2, $3, $4, 'queued', $5, $6, NOW())""",
+                job_id, source_url, req.target_lang, req.mode,
+                req.visitor_token or str(uuid.uuid4()), req.visibility,
+            )
     except Exception as e:
         logger.error(f"DB insert failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
     try:
+        from tasks.pipeline_task import process_video_task
         result = process_video_task.delay(
             job_id=job_id,
             source_url=source_url,
