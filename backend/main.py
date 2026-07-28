@@ -49,6 +49,8 @@ from api.platforms import router as platforms_router
 from api.auth_router import router as auth_router
 from api.stripe_router import router as stripe_router
 
+from api.bodacc import router as bodacc_router
+
 app.include_router(jobs_public_router, prefix="/jobs")
 app.include_router(check_url_router, prefix="/jobs")
 app.include_router(jobs_resolve_router, prefix="/jobs")
@@ -61,6 +63,7 @@ app.include_router(stats_router, prefix="/stats")
 app.include_router(platforms_router)
 app.include_router(auth_router)
 app.include_router(stripe_router)
+app.include_router(bodacc_router)
 
 
 # ── Solana RPC Proxy (évite les CORS navigateur) ──────────────
