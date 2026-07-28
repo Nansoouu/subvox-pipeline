@@ -25,3 +25,11 @@ async def get_current_user(authorization: str = Header(None, alias="Authorizatio
     if user is None:
         raise HTTPException(401, "Non authentifié")
     return user
+
+
+async def get_current_admin(authorization: str = Header(None, alias="Authorization")):
+    """Vérifie le JWT et retourne l'utilisateur si admin."""
+    user = await get_current_user(authorization)
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Accès réservé aux administrateurs")
+    return user

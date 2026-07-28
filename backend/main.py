@@ -46,6 +46,8 @@ from api.jobs.upload import router as jobs_upload_router
 from api.jobs.dispatch import router as jobs_dispatch_router
 from api.stats import router as stats_router
 from api.platforms import router as platforms_router
+from api.auth_router import router as auth_router
+from api.stripe_router import router as stripe_router
 
 app.include_router(jobs_public_router, prefix="/jobs")
 app.include_router(check_url_router, prefix="/jobs")
@@ -57,6 +59,8 @@ app.include_router(jobs_upload_router, prefix="/jobs")
 app.include_router(jobs_dispatch_router, prefix="/internal")
 app.include_router(stats_router, prefix="/stats")
 app.include_router(platforms_router)
+app.include_router(auth_router)
+app.include_router(stripe_router)
 
 
 # ── Solana RPC Proxy (évite les CORS navigateur) ──────────────

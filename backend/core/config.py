@@ -77,6 +77,28 @@ class Settings:
     # ── URLs ─────────────────────────────────────────────────────────
     FRONTEND_URL: str = _get("frontend_url", "http://localhost:3000")
 
+    # ── Auth / OAuth ──────────────────────────────────────────
+    GOOGLE_CLIENT_ID: str = _get("google_client_id", "")
+    GOOGLE_CLIENT_SECRET: str = _get("google_client_secret", "")
+    GOOGLE_REDIRECT_URI: str = _get("google_redirect_uri", "https://api.subvox.xyz/auth/google/callback")
+
+    GITHUB_CLIENT_ID: str = _get("github_client_id", "")
+    GITHUB_CLIENT_SECRET: str = _get("github_client_secret", "")
+    GITHUB_REDIRECT_URI: str = _get("github_redirect_uri", "https://api.subvox.xyz/auth/github/callback")
+
+    TWITTER_CLIENT_ID: str = _get("twitter_client_id", "")
+    TWITTER_CLIENT_SECRET: str = _get("twitter_client_secret", "")
+    TWITTER_REDIRECT_URI: str = _get("twitter_redirect_uri", "https://api.subvox.xyz/auth/twitter/callback")
+
+    # ── Stripe ──────────────────────────────────────────────────
+    STRIPE_SECRET_KEY: str = _get("stripe_secret_key", "")
+    STRIPE_PUBLISHABLE_KEY: str = _get("stripe_publishable_key", "")
+    STRIPE_WEBHOOK_SECRET: str = _get("stripe_webhook_secret", "")
+    STRIPE_PRICE_PASSION_MONTHLY: str = _get("stripe_price_passion_monthly", "")
+    STRIPE_PRICE_PASSION_ANNUAL: str = _get("stripe_price_passion_annual", "")
+    STRIPE_PRICE_ULTIMATE_MONTHLY: str = _get("stripe_price_ultimate_monthly", "")
+    STRIPE_PRICE_ULTIMATE_ANNUAL: str = _get("stripe_price_ultimate_annual", "")
+
     # ── JWT ──────────────────────────────────────────────────────────
     JWT_SECRET: str = _get("jwt_secret", "change-me-in-production")
     JWT_ALGORITHM: str = "HS256"
