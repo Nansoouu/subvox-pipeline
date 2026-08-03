@@ -24,8 +24,6 @@ async def step_visual_analysis(
         aux timestamps des sous-titres plutôt qu'un échantillonnage uniforme.
       - Si srt_timestamps est fourni, l'analyse se concentre sur ces moments-clés.
     """
-    from core.pipeline.visual_analysis import VisualAnalysisStep
-
     log_extra = {"job_id": job_id[:8], "duration_s": duration_s}
     if srt_timestamps:
         log_extra["srt_timestamps_count"] = len(srt_timestamps)
@@ -40,6 +38,7 @@ async def step_visual_analysis(
         )
 
     try:
+        from core.pipeline.visual_analysis import VisualAnalysisStep
         step = VisualAnalysisStep()
         params = {
             "video_path": video_path,

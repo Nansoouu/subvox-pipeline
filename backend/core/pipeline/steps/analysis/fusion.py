@@ -23,12 +23,11 @@ async def step_fusion(
     Combine meta + text + visual + anonymization + speakers via
     DeepSeek V3.1 pour produire un résumé, des tags SEO et un score qualité.
     """
-    from core.pipeline.fusion import FusionStep
-
     log_extra = {"job_id": job_id[:8]}
     logger.info("Démarrage fusion", extra=log_extra)
 
     try:
+        from core.pipeline.fusion import FusionStep
         step = FusionStep()
         result = await step.analyze({
             "meta_analysis": meta_analysis or {},

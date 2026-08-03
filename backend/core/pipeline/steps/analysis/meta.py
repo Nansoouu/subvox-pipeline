@@ -21,12 +21,11 @@ async def step_meta_analysis(
     Détermine la catégorie, le type de contenu, la langue probable et
     les recommandations d'anonymisation.
     """
-    from core.pipeline.meta_analysis import MetaAnalysisStep
-
     log_extra = {"job_id": job_id[:8]}
     logger.info("Démarrage meta_analysis", extra=log_extra)
 
     try:
+        from core.pipeline.meta_analysis import MetaAnalysisStep
         step = MetaAnalysisStep()
         result = await step.analyze({
             "title": video_title,

@@ -20,8 +20,6 @@ async def step_text_analysis(
     Étape 3 bis — Analyse textuelle du transcript via OpenRouter DeepSeek V3.1.
     Extrait thèmes, tonalité, highlights, mots-clés, entités nommées.
     """
-    from core.pipeline.text_analysis import TextAnalysisStep
-
     log_extra = {"job_id": job_id[:8], "transcript_len": len(transcript)}
     logger.info("Démarrage text_analysis", extra=log_extra)
 
@@ -33,6 +31,7 @@ async def step_text_analysis(
         )
 
     try:
+        from core.pipeline.text_analysis import TextAnalysisStep
         step = TextAnalysisStep()
         result = await step.analyze({
             "transcript": transcript,

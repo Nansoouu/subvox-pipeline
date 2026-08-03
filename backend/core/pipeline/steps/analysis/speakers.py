@@ -18,8 +18,6 @@ async def step_speaker_analysis(
     """
     Étape 4 quater — Diarisation des locuteurs via Pyannote 3.1.
     """
-    from core.pipeline.speaker_analysis import SpeakerAnalysisStep
-
     log_extra = {"job_id": job_id[:8]}
     logger.info("Démarrage speaker_analysis", extra=log_extra)
 
@@ -31,6 +29,7 @@ async def step_speaker_analysis(
         )
 
     try:
+        from core.pipeline.speaker_analysis import SpeakerAnalysisStep
         step = SpeakerAnalysisStep()
         result = await step.analyze({
             "video_path": video_path,

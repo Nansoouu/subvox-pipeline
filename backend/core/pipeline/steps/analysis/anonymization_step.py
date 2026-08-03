@@ -19,7 +19,7 @@ async def step_anonymization(
     """
     Étape 4 ter — Floutage adaptatif visages/plaques via YOLOv8 + OpenCV.
     """
-    from core.pipeline.anonymization import AnonymizationStep
+    from core.pipeline.steps import StepResult
 
     log_extra = {"job_id": job_id[:8]}
     logger.info("Démarrage anonymization", extra=log_extra)
@@ -36,6 +36,7 @@ async def step_anonymization(
         )
 
     try:
+        from core.pipeline.anonymization import AnonymizationStep
         step = AnonymizationStep()
         result = await step.analyze({
             "video_path": video_path,
