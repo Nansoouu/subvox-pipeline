@@ -8,3 +8,8 @@ ignore = ["E402", "E741"]
 "backend/core/pipeline/speaker_analysis.py" = ["F401"]
 "backend/core/pipeline/steps/download.py" = ["F401"]
 "backend/core/pipeline/watermark.py" = ["F401"]
+
+[dependency-groups]
+dev = [
+    "passlib>=1.7.4",
+]

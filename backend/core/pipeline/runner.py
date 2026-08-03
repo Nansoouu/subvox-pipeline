@@ -955,12 +955,18 @@ async def run_pipeline(
             else:
                 logger.info("Etape 'burning' deja completee -- skip", extra=log_extra)
 
-            # ── 2 uploads parallèles ──────────────────────────────────────
+            # ── 2 uploads parallèles (copie locale → /app/storage) ───────
+            import shutil as _shutil
+            from pathlib import Path as _P
+
             async def _upload_target():
                 if "uploading" not in completed:
-                    return await _retry_burn_upload(
-                        source_path=str(tmp / "burned_target.mp4"),
-                    )
+                    burned_path = tmp / "burned_target.mp4"
+                    if not burned_path.exists():
+                        return StepResult(success=False, error="burned_target.mp4 introuvable pour upload")
+                    fname = f"subvox_{job_id[:8]}.mp4"
+                    _shutil.copy2(str(burned_path), str(_P("/app/storage") / fname))
+                    return StepResult(success=True, data={"storage_url": f"/storage/{fname}"})
                 return StepResult(success=True, data={
                     "storage_url": storage_key or "",
                 })
@@ -969,11 +975,12 @@ async def run_pipeline(
                 if not has_source_ass:
                     return StepResult(success=True, data={"skipped": True})
                 if "uploading" not in completed:
-                    # Upload vers le prefix source_sub_
-                    src_path = str(tmp / "burned_source.mp4")
-                    return await _retry_burn_upload(
-                        source_path=src_path, prefix="source_sub_",
-                    )
+                    src_path = tmp / "burned_source.mp4"
+                    if not src_path.exists():
+                        return StepResult(success=True, data={"skipped": True})
+                    fname = f"subvox_src_{job_id[:8]}.mp4"
+                    _shutil.copy2(str(src_path), str(_P("/app/storage") / fname))
+                    return StepResult(success=True, data={"storage_url": f"/storage/{fname}"})
                 return StepResult(success=True, data={"skipped": True})
 
             if "uploading" not in completed:
