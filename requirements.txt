@@ -29,3 +29,5 @@ uvicorn==0.44.0
 yt-dlp
 openai-whisper
 stripe==11.6.0
+passlib==1.7.4
+bcrypt==4.0.1
