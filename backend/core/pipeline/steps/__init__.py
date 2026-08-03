@@ -11,7 +11,7 @@ import os
 
 @dataclass
 class StepResult:
-    success: bool
+    success: bool = True
     data: dict[str, Any] | None = None
     error: str | None = None
     skipped: bool = False
