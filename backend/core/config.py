@@ -144,7 +144,7 @@ class Settings:
     # ── Pipeline ─────────────────────────────────────────────────────
     SOFT_SUBS_ENABLED: bool = _get_bool("soft_subs_enabled", False)
     LOCAL_TEMP_DIR: str = _get("local_temp_dir", "/tmp/subvox-processing")
-    ANONYMIZE_ENABLED: bool = _get_bool("anonymize_enabled", True)
+    ANONYMIZE_ENABLED: bool = _get_bool("anonymize_enabled", False)
     VISUAL_ANALYSIS_INTERVAL_BASE: int = 5
     ANALYSIS_WORKER_QUEUE: str = "video_analysis"
     VIDEO_SHORT_MAX_SECONDS: int = 120
