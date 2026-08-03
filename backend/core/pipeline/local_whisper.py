@@ -17,7 +17,7 @@ def _transcribe_local(p,srt,txt,gk=""):
     import traceback as tb
     try:
         m=_get_model(); logger.info(f"whisper {MODEL_SIZE} transcribing {p.name}...")
-        r=m.transcribe(str(p),language="en",temperature=0.0,no_speech_threshold=0.6,condition_on_previous_text=False)
+        r=m.transcribe(str(p),language=None,temperature=0.0,no_speech_threshold=0.6,condition_on_previous_text=False)
         segs=r.get("segments",[]); sl,tp=[],[]
         for i,s in enumerate(segs,1):
             t=s.get("text","").strip()
