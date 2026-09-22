@@ -49,11 +49,16 @@ async def dispatch_batch(reqs: list[DispatchRequest]):
     results = []
     for req in reqs:
         try:
-            result = process_video_task.delay(
-                job_id=req.job_id,
-                source_url=req.source_url,
-                target_lang=req.target_lang,
-                user_id=req.user_id,
+            result = celery_app.send_task(
+                "tasks.pipeline_task.process_video_task",
+                args=[],
+                kwargs={
+                    "job_id": req.job_id,
+                    "source_url": req.source_url,
+                    "target_lang": req.target_lang,
+                    "user_id": req.user_id,
+                },
+                queue="xlong",
             )
             results.append({
                 "job_id": req.job_id[:8],
