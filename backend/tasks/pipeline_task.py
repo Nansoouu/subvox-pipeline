@@ -634,6 +634,7 @@ def burn_job_background(
             
             _logger.info("Burn FFmpeg (langue source)...", extra={"job_id": job_id[:8]})
             source_ass = _tmp_burn / "source_subtitles.ass"
+            source_storage_key = ""
             if source_ass.exists():
                 # Burn avec le ASS source
                 source_burn_result = await step_burn(job_id, on_progress=None, ass_path_override=str(source_ass))
@@ -671,20 +672,28 @@ def burn_job_background(
                             extra={"job_id": job_id[:8]},
                         )
             
-            # ── 5. Upload Supabase ───────────────────────────────────────
+            # ── 5. Upload (stockage local → /storage) ────────────────────
             await save_burn_status(job_id, "uploading", 70)
-            
-                        
-            if not upload_result or not upload_result.success:
-                raise RuntimeError(
-                    f"Upload après burn échoué: {upload_result.error if upload_result else 'unknown'}"
-                )
-            
+
+            if not burned_path:
+                raise RuntimeError("Upload après burn échoué: aucun fichier burné")
+
+            from core.supabase_storage import upload_video as _local_upload
+
+            up_res = await _local_upload(
+                job_id,
+                Path(burned_path),
+                filename=f"subvox_{job_id[:8]}.mp4",
+            )
+            if not up_res or not up_res.get("storage_url"):
+                raise RuntimeError("Upload après burn échoué: stockage local indisponible")
+
+            storage_key = str(up_res["storage_url"])
             _logger.info(
                 "Upload terminé après burn",
                 extra={
                     "job_id": job_id[:8],
-                    "storage_url": storage_key[:80] if storage_key else "empty",
+                    "storage_url": storage_key[:80],
                 },
             )
             
@@ -694,21 +703,28 @@ def burn_job_background(
             async with direct_connect() as conn:
                 # Construire l'objet burned_languages pour stocker les 2 URLs
                 burned_langs = json.dumps({
-                    source_lang_db: source_storage_key or "",
+                    "burned_languages": {
+                        target_lang_db: storage_key,
+                        source_lang_db: source_storage_key or "",
+                    }
                 })
                 await conn.execute(
                     "UPDATE jobs SET "
                     "storage_url=$2, step_data=step_data::jsonb || $3::jsonb, updated_at=now() "
                     "WHERE id=$1",
                     _uuid.UUID(job_id),
+                    storage_key,
+                    burned_langs,
                 )
-            
-            
+
+            await save_burn_status(job_id, "ready", 100, storage_key)
+
             _logger.info(
                 "🔥 Burn asynchrone terminé avec succès",
+                extra={"job_id": job_id[:8], "storage_url": storage_key[:80]},
             )
-            
-            return {"status": "ready"}
+
+            return {"status": "ready", "storage_url": storage_key}
         
         result = asyncio.run(_run_burn())
         return result
